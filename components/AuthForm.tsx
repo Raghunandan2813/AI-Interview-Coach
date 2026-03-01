@@ -97,7 +97,7 @@ const AuthForm = ({ type }: AuthFormProps) => {
     <div className="card-border lg:min-w-[480px] flex flex-col overflow-hidden">
       <div className="flex flex-col gap-6 fill-card-foreground py-10 px-8">
         <div className="flex flex-col items-center gap-3 text-center">
-          <Image src="/logo.svg" alt="logo" height={36} width={42} className="shrink-0" />
+          <Image src="/roboo.svg" alt="logo" height={36} width={42} className="shrink-0" />
           <p className="text-sm font-medium text-primary-200">Boost Your Prep With AI</p>
         </div>
 

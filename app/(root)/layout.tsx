@@ -12,10 +12,10 @@ const RootLayout = async ({children} : {children : ReactNode}) => {
       <nav className="flex items-center justify-between w-full pb-2 border-b border-white/10">
         <Link
           href="/"
-          className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-white/5"
+          className="flex flex-row items-center gap-1 rounded-lg px-2 py-1.5 transition-colors hover:bg-white/5"
         >
-          <Image src="/logo.svg" alt="logo" width={38} height={32} className="shrink-0" />
-          <span className="text-lg font-semibold text-primary-100 tracking-tight">InterAi</span>
+          <Image src="/roboo.png" alt="logo" width={60} height={32} className="shrink-0" />
+          <span className="text-xl font-semibold text-white tracking-tight">InterAi</span>
         </Link>
       </nav>
       {children}

@@ -36,7 +36,7 @@ import { getInterviewsByUserId, getLatestInterviews } from '@/lib/action/general
           alt="AI assistant"
           width={360}
           height={360}
-          className="max-sm:hidden object-contain"
+          className="max-sm:hidden object-fill"
         />
       </section>
 
