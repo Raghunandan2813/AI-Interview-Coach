@@ -5,7 +5,7 @@ import { createGroq, groq } from "@ai-sdk/groq";
 
 
 export async function POST(request: Request) {
-  const { type, role, level, techstack, amount } = await request.json();
+  const { type, role, level, techstack, amount, userid } = await request.json();
 
   try {
     const groqProvider = createGroq({
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
       level,
       techstack: techstack ? techstack.split(",") : [],
       questions: parsedQuestions,
-      userId: "{{response.userId}",
+      userId: userid,
       finalized: true,
       coverImage: getRandomInterviewCover(),
       createdAt: new Date().toISOString(),
