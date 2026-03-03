@@ -129,7 +129,7 @@ const AuthForm = ({ type }: AuthFormProps) => {
               name="password"
               label="Password"
               type="password"
-              placeholder="••••••••"
+              placeholder="•••••••• at least six digit"
               
             />
 

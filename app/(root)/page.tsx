@@ -32,7 +32,7 @@ import { getInterviewsByUserId, getLatestInterviews } from '@/lib/action/general
           </Button>
         </div>
         <Image
-          src="/robot.png"
+          src="/robolap.jpg"
           alt="AI assistant"
           width={360}
           height={360}
