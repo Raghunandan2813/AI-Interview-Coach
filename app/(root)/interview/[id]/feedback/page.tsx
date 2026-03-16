@@ -3,13 +3,14 @@ import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import jsPDF from "jspdf";
-
+import { downloadFeedback } from "@/lib/action/downloadFeedback";
 import {
   getFeedbackByInterviewId,
   getInterviewById, 
 } from  "@/lib/action/general.action";
 import { Button } from "@/components/ui/button";
 import { getCurrentUser } from "@/lib/action/auth.action";
+import DownloadFeedbackButton from "@/components/DownloadFeedbackButton";
 
 
 
@@ -101,9 +102,7 @@ const Feedback = async ({ params }: RouteParams ) => {
             Retake interview
           </Link>
         </Button>
-        <Button className="btn-secondary flex-1">
-          Download your feedback
-        </Button>
+        <DownloadFeedbackButton feedback = {feedback}/>
       </div>
     </section>
   );
