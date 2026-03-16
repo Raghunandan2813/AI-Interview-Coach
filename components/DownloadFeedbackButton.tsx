@@ -1,5 +1,5 @@
 "use client";
-import { downloadFeedback } from "@/lib/action/downloadFeedback";
+import { downloadFeedback } from "@/lib/action/download.feedback";
 
 export default function DownloadFeedbackButton({ feedback } : any) {
   return (
