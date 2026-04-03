@@ -1,8 +1,14 @@
 import React from "react";
+import type { Metadata } from "next";
 import { getCurrentUser } from "@/lib/action/auth.action";
-import { getFeedbacksByUserId, getInterviewById } from "@/lib/action/general.action";
+import { getFeedbacksByUserId, getInterviewsByUserId } from "@/lib/action/general.action";
 import ProgressChart from "@/components/ProgressChart";
 import InterviewCard from "@/components/InterviewCard";
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+  description: "View your interview analytics, average score, and progress over time.",
+};
 
 const Dashboard = async () => {
   const user = await getCurrentUser();
@@ -15,12 +21,11 @@ const Dashboard = async () => {
   }
 
   const userFeedbacks = (await getFeedbacksByUserId(user.id)) || [];
-
-  const interviewPromises = userFeedbacks.map((f) => getInterviewById(f.interviewId));
-  const fetchedInterviews = await Promise.all(interviewPromises);
+  const userInterviews = (await getInterviewsByUserId(user.id)) || [];
+  const interviewMap = new Map(userInterviews.map((interview) => [interview.id, interview]));
 
   const validPairs = userFeedbacks.map((feedback, index) => {
-    const interview = fetchedInterviews[index];
+    const interview = interviewMap.get(feedback.interviewId);
     return interview ? { feedback, interview } : null;
   }).filter(Boolean) as { feedback: any, interview: any }[];
 

@@ -1,8 +1,15 @@
 import CreateInterviewForm from "@/components/CreateInterviewForm";
 import { getCurrentUser } from "@/lib/action/auth.action";
 import React from "react";
+import type { Metadata } from "next";
 import AgentWrapper from "@/components/AgentWrapper";
 import { Bot, FileText, Sparkles } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Start Interview",
+  description:
+    "Create a customized AI mock interview using form builder or voice assistant.",
+};
 
 const page = async () => {
   const user = await getCurrentUser();

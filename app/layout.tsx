@@ -9,8 +9,38 @@ const monaSans = Mona_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "InterviewPrep",
-  description: "Creating an Ai interview prep platform",
+  metadataBase: new URL("https://interviewprep.app"),
+  title: {
+    default: "InterAI - AI Mock Interview Practice",
+    template: "%s | InterAI",
+  },
+  description:
+    "Practice AI-powered mock interviews, get detailed feedback, and track progress with performance analytics.",
+  keywords: [
+    "mock interview",
+    "interview preparation",
+    "AI interview",
+    "coding interview practice",
+    "interview feedback",
+  ],
+  openGraph: {
+    title: "InterAI - AI Mock Interview Practice",
+    description:
+      "Practice AI-powered mock interviews, get detailed feedback, and improve faster.",
+    type: "website",
+    siteName: "InterAI",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "InterAI - AI Mock Interview Practice",
+    description:
+      "Practice AI-powered mock interviews, get detailed feedback, and improve faster.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  manifest: "/manifest.json",
   icons: {
     icon: "/roboo.png",
   },
@@ -23,8 +53,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <link rel="manifest" href="/manifest.json" />
-      <link rel="icon" href="/roboo.png" />
       <body className={`${monaSans.className} antialiased  pattern`}>
         {children}
         <Toaster />

@@ -36,11 +36,86 @@ interface SavedMessage {
   content : string
 }
 
+interface LiveAnswerFeedback {
+  question: string;
+  answer: string;
+  qualityScore: number;
+  fillerCount: number;
+  fillerWords: string[];
+  suggestion: string;
+}
+
+const FILLER_WORD_REGEX =
+  /\b(um+|uh+|erm|ah+|like|you know|actually|basically|literally)\b/gi;
+
+const getWordCount = (text: string) =>
+  (text.match(/\b[\w'-]+\b/g) || []).length;
+
+const extractKeywords = (text: string) =>
+  (text.toLowerCase().match(/\b[a-z]{4,}\b/g) || [])
+    .filter((word) => !["what", "when", "where", "which", "would", "could", "should", "about", "there", "their", "these", "those"].includes(word))
+    .slice(0, 8);
+
+const buildLiveFeedback = (
+  question: string,
+  answer: string,
+): LiveAnswerFeedback => {
+  const answerText = answer.trim();
+  const words = getWordCount(answerText);
+  const fillers = answerText.match(FILLER_WORD_REGEX) || [];
+  const fillerCount = fillers.length;
+  const fillerRatio = words > 0 ? fillerCount / words : 1;
+  const lowerAnswer = answerText.toLowerCase();
+  const questionKeywords = extractKeywords(question);
+  const keywordHitCount = questionKeywords.filter((k) =>
+    lowerAnswer.includes(k),
+  ).length;
+
+  let score = 60;
+
+  if (words >= 25 && words <= 90) score += 20;
+  else if (words >= 15) score += 10;
+  else score -= 20;
+
+  if (keywordHitCount >= 3) score += 12;
+  else if (keywordHitCount >= 1) score += 6;
+  else score -= 8;
+
+  if (/(for example|for instance|because|therefore|so that|tradeoff|trade-off)/i.test(lowerAnswer)) {
+    score += 8;
+  }
+
+  score -= Math.min(30, Math.round(fillerCount * 4 + fillerRatio * 100 * 0.25));
+  score = Math.max(0, Math.min(100, score));
+
+  let suggestion = "Strong attempt. Tighten structure: answer -> reasoning -> short example.";
+  if (fillerCount >= 3 || fillerRatio > 0.08) {
+    suggestion =
+      "Reduce filler words. Pause silently instead of using \"um/uh\", and keep sentences shorter.";
+  } else if (words < 20) {
+    suggestion =
+      "Answer is too short. Add approach, one concrete example, and expected outcome.";
+  } else if (keywordHitCount === 0) {
+    suggestion =
+      "Use terms from the question directly and explain tradeoffs to make your answer more relevant.";
+  }
+
+  return {
+    question: question || "Interviewer question",
+    answer: answerText,
+    qualityScore: score,
+    fillerCount,
+    fillerWords: [...new Set(fillers.map((item) => item.toLowerCase()))],
+    suggestion,
+  };
+};
+
 const Agent = ({userName , userId, type, interviewId, questions} : AgentProps) => {
   const router = useRouter();
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [callStatus , setCallStatus] = useState<CallStatus>(CallStatus.INACTIVE)
   const [messages , setMessages] = useState<SavedMessage[]>([]);
+  const [liveFeedback, setLiveFeedback] = useState<LiveAnswerFeedback[]>([]);
   const hasSubmitted = React.useRef(false);
   const [camError, setCamError] = useState(false);
   
@@ -77,7 +152,22 @@ const Agent = ({userName , userId, type, interviewId, questions} : AgentProps) =
     const onMessage = (message : Message) => {
       if(message.type === 'transcript' && message.transcriptType === 'final'){
         const newMessage = {role: mapRole(message.role), content: message.transcript}
-        setMessages((prev) => [...prev, newMessage])
+        setMessages((prev) => {
+          const nextMessages = [...prev, newMessage];
+
+          if (type === "interview" && newMessage.role === "users") {
+            const lastQuestion = [...prev]
+              .reverse()
+              .find((item) => item.role === "assistance")?.content;
+
+            if (lastQuestion) {
+              const insight = buildLiveFeedback(lastQuestion, newMessage.content);
+              setLiveFeedback((existing) => [...existing, insight]);
+            }
+          }
+
+          return nextMessages;
+        })
       }
     }
     const onSpeechStart = () => setIsSpeaking(true);
@@ -221,6 +311,27 @@ const handleDisconnect = async ()=>{
 
   const latestMessage = messages[messages.length-1]?.content;
   const isCallInactiveOrFinished = callStatus=== CallStatus.INACTIVE || callStatus === CallStatus.FINISHED;
+  const averageLiveScore =
+    liveFeedback.length > 0
+      ? Math.round(
+          liveFeedback.reduce((sum, item) => sum + item.qualityScore, 0) /
+            liveFeedback.length,
+        )
+      : null;
+
+  const recentWindow = liveFeedback.slice(-3);
+  const recentTrendDelta =
+    recentWindow.length >= 2
+      ? recentWindow[recentWindow.length - 1].qualityScore - recentWindow[0].qualityScore
+      : 0;
+  const trendLabel =
+    recentWindow.length < 2
+      ? "Not enough data"
+      : recentTrendDelta >= 5
+      ? "Improving"
+      : recentTrendDelta <= -5
+      ? "Dropping"
+      : "Stable";
 
   return (
     <>
@@ -287,6 +398,107 @@ const handleDisconnect = async ()=>{
               {latestMessage}
             </p>
           </div>
+        </div>
+      )}
+
+      {type === "interview" && (
+        <div className="mt-6 rounded-2xl border border-white/10 bg-dark-200/60 p-4 md:p-5">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <h4 className="text-sm md:text-base font-semibold text-light-100">
+              Live Answer Feedback
+            </h4>
+            {liveFeedback.length > 0 && (
+              <span className="text-xs text-light-400">
+                {liveFeedback.length} answer{liveFeedback.length > 1 ? "s" : ""} analyzed
+              </span>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <div className="rounded-xl border border-white/10 bg-dark-300/40 p-3">
+              <p className="text-[11px] uppercase tracking-wider text-light-500 mb-1">
+                Live Improvement Meter
+              </p>
+              <div className="flex items-center justify-between gap-2">
+                <p
+                  className={cn(
+                    "text-sm font-semibold",
+                    averageLiveScore === null
+                      ? "text-light-400"
+                      : averageLiveScore >= 75
+                      ? "text-emerald-300"
+                      : averageLiveScore >= 55
+                      ? "text-amber-300"
+                      : "text-rose-300",
+                  )}
+                >
+                  {averageLiveScore === null
+                    ? "Waiting for answers"
+                    : averageLiveScore >= 75
+                    ? "Green - Strong"
+                    : averageLiveScore >= 55
+                    ? "Yellow - Improve"
+                    : "Red - Weak"}
+                </p>
+                <p className="text-xs text-light-300">
+                  {averageLiveScore === null ? "-" : `${averageLiveScore}/100`}
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-white/10 bg-dark-300/40 p-3">
+              <p className="text-[11px] uppercase tracking-wider text-light-500 mb-1">
+                Quality Trend (last 3)
+              </p>
+              <div className="flex items-center justify-between gap-2">
+                <p
+                  className={cn(
+                    "text-sm font-semibold",
+                    trendLabel === "Improving"
+                      ? "text-emerald-300"
+                      : trendLabel === "Dropping"
+                      ? "text-rose-300"
+                      : "text-light-300",
+                  )}
+                >
+                  {trendLabel}
+                </p>
+                <p className="text-xs text-light-300">
+                  {recentWindow.length < 2 ? "-" : `${recentTrendDelta > 0 ? "+" : ""}${recentTrendDelta}`}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {liveFeedback.length === 0 ? (
+            <p className="text-sm text-light-500">
+              Start answering questions to get strict, live scoring, filler-word checks, and better-answer suggestions.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-3 max-h-64 overflow-y-auto pr-1">
+              {liveFeedback.map((item, index) => (
+                <div key={`${index}-${item.qualityScore}`} className="rounded-xl border border-white/10 bg-dark-300/40 p-3">
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <p className="text-xs text-light-400">Q{index + 1}</p>
+                    <p className="text-xs font-semibold text-primary-200">
+                      Quality Score: {item.qualityScore}/100
+                    </p>
+                  </div>
+                  <p className="text-xs text-light-300 line-clamp-2 mb-1">{item.question}</p>
+                  <p className="text-xs text-light-500">
+                    Fillers:{" "}
+                    <span className="text-light-300 font-medium">
+                      {item.fillerCount}
+                    </span>
+                    {item.fillerWords.length > 0 ? ` (${item.fillerWords.join(", ")})` : ""}
+                  </p>
+                  <p className="text-xs text-emerald-300 mt-2">
+                    Better answer tip: {item.suggestion}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

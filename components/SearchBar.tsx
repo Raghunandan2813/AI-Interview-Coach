@@ -34,9 +34,9 @@ export default function SearchBar({ currentUserId }: { currentUserId?: string })
       // Avoid pushing if they clicked a suggestion and are no longer focused
       if (isFocused && query !== (searchParams.get('query') || '')) {
          if (query.trim()) {
-           router.push(`/?query=${encodeURIComponent(query.trim())}`)
+           router.replace(`/?query=${encodeURIComponent(query.trim())}`)
          } else if (searchParams.has('query')) {
-           router.push('/')
+           router.replace('/')
          }
       }
     }, 400)

@@ -2,11 +2,19 @@ import { Button } from '@/components/ui/button'
 import React from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import type { Metadata } from "next";
 
 import InterviewCard from '@/components/InterviewCard'
 import LoadMoreInterviews from '@/components/LoadMoreInterviews'
 import { getCurrentUser } from '@/lib/action/auth.action'
 import { getInterviewsByUserId, getLatestInterviews } from '@/lib/action/general.action'
+
+export const metadata: Metadata = {
+  title: "Home",
+  description:
+    "Practice AI mock interviews, explore interviews created by others, and start improving today.",
+};
+
  async function Home(props: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
   const searchParams = await props.searchParams;
   const query = typeof searchParams.query === 'string' ? searchParams.query.toLowerCase() : '';

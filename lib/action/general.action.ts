@@ -151,14 +151,31 @@ Please directly address the user's emotional state, confidence, and focus in you
 
     const { text } = await generateText({
       model: groqProvider("llama-3.3-70b-versatile"),
-      system: `You are a professional interviewer analyzing a mock interview. Your task is to evaluate the candidate based on structured categories. Respond with only valid JSON, no markdown or extra text.`,
-      prompt: `Analyze this mock interview transcript and score the candidate. Be thorough and detailed. Don't be lenient; if there are mistakes or areas for improvement, point them out.
+      system: `You are a strict senior interviewer. Be consistent and evidence-based. Your task is to evaluate the candidate using a hard rubric.
+Rules:
+- Do NOT be lenient.
+- Penalize vague, generic, or incomplete answers.
+- Penalize filler-heavy communication and poor structure.
+- Give high scores only when there is clear technical depth and specific examples.
+- Keep category scores aligned with comments and finalAssessment.
+- Respond with only valid JSON, no markdown or extra text.`,
+      prompt: `Analyze this mock interview transcript and score the candidate with strict standards.
 ${behaviorContext}
 
 Transcript:
 ${formattedTranscript}
 
 Score the candidate from 0 to 100 in exactly these 5 categories (use these exact names): "Communication Skills", "Technical Knowledge", "Problem Solving", "Cultural Fit", "Confidence and Clarity".
+
+Scoring rubric:
+- 0-39: weak / mostly incorrect / unclear.
+- 40-59: basic understanding, many gaps.
+- 60-74: acceptable but lacks depth or examples.
+- 75-89: strong, mostly correct, good reasoning.
+- 90-100: exceptional depth, precise, concise, and evidence-backed.
+
+Use strict scoring: average candidates should usually be in 55-75 range.
+Avoid random variance: scores must be justified by transcript evidence.
 
 Return a single JSON object with this exact structure (no other fields, no markdown code fence):
 {

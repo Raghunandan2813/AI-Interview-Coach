@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { generateQuizQuestions, QuizQuestion } from '@/lib/action/quiz.action';
+import { saveQuizScore } from '@/lib/action/score.action';
 import { Dices, Brain, Trophy, ChevronRight, Hash, Frown, CheckCircle2, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -48,13 +49,23 @@ export default function QuizGame() {
     }
   };
 
-  const nextQuestion = () => {
+  const nextQuestion = async () => {
     if (currentQIndex < questions.length - 1) {
       setCurrentQIndex((prev) => prev + 1);
       setSelectedAnswer(null);
       setIsRevealed(false);
     } else {
       setGameState('results');
+      // Save score to database
+      try {
+        await saveQuizScore(score + (isRevealed && selectedAnswer === questions[currentQIndex].correctAnswerIndex ? 0 : 0));
+        // Note: score state is already updated in handleSelectOption immediately, 
+        // but due to react batching it might be old in this closure if it wasn't a functional update.
+        // Actually, since handleSelectOption updates it, `score` in this render closure is accurate!
+        await saveQuizScore(score);
+      } catch (e) {
+        console.error("Failed to save score");
+      }
     }
   };
 

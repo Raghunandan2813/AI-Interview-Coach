@@ -1,7 +1,13 @@
 import React from "react";
+import type { Metadata } from "next";
 import { getCurrentUser } from "@/lib/action/auth.action";
-import { getFeedbacksByUserId, getInterviewById } from "@/lib/action/general.action";
+import { getFeedbacksByUserId, getInterviewsByUserId } from "@/lib/action/general.action";
 import InterviewCard from "@/components/InterviewCard";
+
+export const metadata: Metadata = {
+  title: "Feedback History",
+  description: "Review detailed interview feedback, strengths, and areas to improve.",
+};
 
 const FeedbackPage = async () => {
   const user = await getCurrentUser();
@@ -14,12 +20,11 @@ const FeedbackPage = async () => {
   }
 
   const userFeedbacks = (await getFeedbacksByUserId(user.id)) || [];
-
-  const interviewPromises = userFeedbacks.map((f) => getInterviewById(f.interviewId));
-  const fetchedInterviews = await Promise.all(interviewPromises);
+  const userInterviews = (await getInterviewsByUserId(user.id)) || [];
+  const interviewMap = new Map(userInterviews.map((interview) => [interview.id, interview]));
 
   const validPairs = userFeedbacks.map((feedback, index) => {
-    const interview = fetchedInterviews[index];
+    const interview = interviewMap.get(feedback.interviewId);
     return interview ? { feedback, interview } : null;
   }).filter(Boolean) as { feedback: any, interview: any }[];
 
