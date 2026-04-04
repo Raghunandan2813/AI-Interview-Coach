@@ -1,9 +1,9 @@
 "use client"
 
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, LayoutDashboard, Mic, FileText, Gamepad2, Trophy, Rss } from 'lucide-react'
+import { Home, LayoutDashboard, Mic, FileText, Gamepad2, Rss, Trophy } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const sidebarLinks = [
@@ -15,34 +15,9 @@ const sidebarLinks = [
   { imgURL: Trophy, route: '/leaderboard', label: 'Leaderboard' },
 ]
 
-type TechUpdate = {
-  title: string
-  link: string
-  source: string
-}
-
 export default function Sidebar() {
   const pathname = usePathname()
-  const [updates, setUpdates] = useState<TechUpdate[]>([])
-
-  useEffect(() => {
-    let mounted = true
-
-    const loadUpdates = async () => {
-      try {
-        const response = await fetch('/api/tech-updates', { cache: 'no-store' })
-        const data = await response.json()
-        if (mounted) setUpdates(data.updates || [])
-      } catch {
-        if (mounted) setUpdates([])
-      }
-    }
-
-    loadUpdates()
-    return () => {
-      mounted = false
-    }
-  }, [])
+  const updates: any[] = []; // Placeholder until you wire it to your backend
 
   return (
     <section className="hidden h-full w-[260px] flex-col justify-between py-10 px-6 max-md:hidden sm:flex border-r border-white/10 shrink-0 overflow-y-auto" style={{ scrollbarWidth: 'none' }}>

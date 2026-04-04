@@ -47,15 +47,13 @@ const UserDropdown = ({ user }: UserDropdownProps) => {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button suppressHydrationWarning className="focus:outline-none">
-          <Avatar className="h-9 w-9 border border-white/10 transition-transform hover:scale-105 active:scale-95">
-            <AvatarImage src={user?.avatarUrl || ""} alt="User Avatar" className="object-cover" />
-            <AvatarFallback className="bg-primary-300 text-dark-100 font-bold">
-              {getInitials(user?.name)}
-            </AvatarFallback>
-          </Avatar>
-        </button>
+      <DropdownMenuTrigger className="focus:outline-none">
+        <Avatar className="h-9 w-9 border border-white/10 transition-transform hover:scale-105 active:scale-95">
+          <AvatarImage src={user?.avatarUrl || ""} alt="User Avatar" className="object-cover" />
+          <AvatarFallback className="bg-primary-300 text-dark-100 font-bold">
+            {getInitials(user?.name)}
+          </AvatarFallback>
+        </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56 bg-dark-200 border-white/10 text-light-100 mt-2 p-2 shadow-xl" align="end">
         <DropdownMenuLabel className="font-normal">
@@ -71,7 +69,7 @@ const UserDropdown = ({ user }: UserDropdownProps) => {
           <Link href="/dashboard" className="flex w-full">Dashboard</Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator className="bg-white/10" />
-        <DropdownMenuItem 
+        <DropdownMenuItem
           onClick={handleSignOut}
           disabled={isSigningOut}
           className="cursor-pointer text-red-400 focus:text-red-300 hover:text-red-300 hover:bg-red-400/10 focus:bg-red-400/10 rounded-md transition-colors"
