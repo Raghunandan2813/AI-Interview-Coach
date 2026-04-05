@@ -47,13 +47,15 @@ const UserDropdown = ({ user }: UserDropdownProps) => {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="focus:outline-none">
-        <Avatar className="h-9 w-9 border border-white/10 transition-transform hover:scale-105 active:scale-95">
-          <AvatarImage src={user?.avatarUrl || ""} alt="User Avatar" className="object-cover" />
-          <AvatarFallback className="bg-primary-300 text-dark-100 font-bold">
-            {getInitials(user?.name)}
-          </AvatarFallback>
-        </Avatar>
+      <DropdownMenuTrigger asChild>
+        <button className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary-200/50">
+          <Avatar className="h-9 w-9 border border-white/10 transition-transform hover:scale-105 active:scale-95">
+            <AvatarImage src={user?.avatarUrl || ""} alt="User Avatar" className="object-cover" />
+            <AvatarFallback className="bg-primary-300 text-dark-100 font-bold">
+              {getInitials(user?.name)}
+            </AvatarFallback>
+          </Avatar>
+        </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56 bg-dark-200 border-white/10 text-light-100 mt-2 p-2 shadow-xl" align="end">
         <DropdownMenuLabel className="font-normal">
