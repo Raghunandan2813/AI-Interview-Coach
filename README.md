@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎙️ InterAI — AI-Powered Mock Interview & Proctoring Platform
 
-## Getting Started
+**InterAI** is a premium, cutting-edge web application designed to help candidates prepare for technical and behavioral interviews using real-time AI agents, live webcam proctoring, and comprehensive feedback report cards.
 
-First, run the development server:
+---
 
+## ✨ Core Features
+
+*   **Interactive Voice AI:** Real-time speech-to-speech mock interviews using **Vapi.ai**, **Deepgram**, and **ElevenLabs**.
+*   **Proctoring & Emotion Analytics:** Client-side face-tracking powered by `@vladmandic/face-api` to monitor focus, confidence, and nervousness.
+*   **Live Metrics:** Real-time answer scoring, filler word tracking (`um`, `uh`, `like`), and quality trend analysis.
+*   **Escalating Quizzes:** 5-question technical quizzes on any topic, escalating in difficulty from Easy to Extreme, powered by **Groq Llama 3.3 70B**.
+*   **PDF Feedback Reports:** Comprehensive candidate assessments across 5 metrics (Communication, Technical, etc.) with downloadable PDF exports via `jspdf`.
+*   **Analytics Dashboard:** Visual tracking of user progress over time with global leaderboards.
+
+---
+
+## 🛠️ Tech Stack
+
+*   **Frontend:** Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, Framer Motion
+*   **Database & Auth:** Firebase client/admin SDK, Firestore database
+*   **AI Integration:** Vercel AI SDK (`ai`), `@ai-sdk/groq`, Vapi Web SDK
+*   **Proctoring:** `@vladmandic/face-api` (TinyFaceDetector, FaceExpressionNet)
+*   **Libraries:** `jspdf`, Zod, Recharts, Lucide Icons
+
+---
+
+## ⚙️ Installation & Running
+
+### 1. Install Dependencies
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Configure Environment Variables
+Create a `.env` file in the root directory:
+```ini
+# Firebase Config
+NEXT_PUBLIC_FIREBASE_API_KEY=your_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_domain
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_id
+FIREBASE_CLIENT_EMAIL=your_admin_email
+FIREBASE_PRIVATE_KEY="your_private_key"
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+# AI Config
+GROQ_API_KEY=your_groq_key
+NEXT_PUBLIC_VAPI_ASSISTANT_ID=your_vapi_assistant_id
+NEXT_PUBLIC_VAPI_PUBLIC_KEY=your_vapi_public_key
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 3. Run Development Server
+```bash
+npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000) in your browser.
