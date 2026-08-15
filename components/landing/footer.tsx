@@ -1,67 +1,56 @@
-'use client'
-
-import { useState } from 'react'
-import { AtSign, Link, Code, Play, ArrowRight, Check } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { FOOTER_COLUMNS } from '@/lib/site-data'
+import { Linkedin, Github, Youtube, Twitter } from 'lucide-react'
+import {
+  FOOTER_COLUMNS,
+  SOCIAL_LINKS,
+  PORTFOLIO_URL,
+  AUTHOR_NAME,
+} from '@/lib/site-data'
 import { Logo } from './logo'
 
-const SOCIALS = [
-  { label: 'X / Twitter', href: '#', icon: AtSign },
-  { label: 'LinkedIn', href: '#', icon: Link },
-  { label: 'GitHub', href: '#', icon: Code },
-  { label: 'YouTube', href: '#', icon: Play },
-]
+const SOCIAL_ICONS = {
+  LinkedIn: Linkedin,
+  GitHub: Github,
+  YouTube: Youtube,
+  X: Twitter,
+} as const
 
 export function Footer() {
-  const [subscribed, setSubscribed] = useState(false)
-
   return (
     <footer className="relative border-t border-border bg-background/60">
-      <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 gap-10 md:grid-cols-6">
-          {/* brand + newsletter */}
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-14 lg:px-8">
+
+        {/* brand + link columns */}
+        <div className="grid grid-cols-2 gap-8 sm:gap-10 lg:grid-cols-6">
+
           <div className="col-span-2">
             <Logo />
-            <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
-              Your personal AI interview coach. Practise realistic interviews, get instant
-              feedback, and walk in ready.
+            <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground text-pretty">
+              Your AI-powered interview coach for smarter practice, personalized
+              feedback, and confident performance.
             </p>
 
-            <form
-              className="mt-6 max-w-xs"
-              onSubmit={(e) => {
-                e.preventDefault()
-                setSubscribed(true)
-              }}
-            >
-              <label htmlFor="newsletter" className="text-sm font-medium text-foreground">
-                Interview tips, monthly
-              </label>
-              <div className="mt-2 flex items-center gap-2">
-                <input
-                  id="newsletter"
-                  type="email"
-                  required
-                  placeholder="you@email.com"
-                  className="h-10 w-full rounded-lg border border-input bg-background/60 px-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-                />
-                <Button
-                  type="submit"
-                  size="icon-lg"
-                  aria-label="Subscribe to newsletter"
-                  className="shrink-0 bg-gradient-to-r from-primary to-heat-200 text-primary-foreground"
-                >
-                  {subscribed ? <Check className="size-4" /> : <ArrowRight className="size-4" />}
-                </Button>
-              </div>
-              {subscribed && (
-                <p className="mt-2 text-xs text-emerald-400">Thanks — you're subscribed!</p>
-              )}
-            </form>
+            <ul className="mt-6 flex items-center gap-2.5">
+              {SOCIAL_LINKS.map((social) => {
+                const Icon = SOCIAL_ICONS[social.label]
+                return (
+                  <li key={social.label}>
+                    <a
+                      href={social.href}
+                      aria-label={social.label}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="grid size-9 place-items-center rounded-lg border border-border text-muted-foreground
+                                 transition-colors hover:border-primary/40 hover:text-foreground
+                                 focus-visible:outline-2 focus-visible:outline-primary"
+                    >
+                      <Icon className="size-4" />
+                    </a>
+                  </li>
+                )
+              })}
+            </ul>
           </div>
 
-          {/* link columns */}
           {FOOTER_COLUMNS.map((col) => (
             <div key={col.title}>
               <h3 className="text-sm font-semibold text-foreground">{col.title}</h3>
@@ -81,35 +70,30 @@ export function Footer() {
           ))}
         </div>
 
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-border pt-6 sm:flex-row">
+        {/* bottom bar */}
+        <div className="mt-10 flex flex-col items-center gap-3 border-t border-border pt-6 text-center
+                        sm:mt-12 md:flex-row md:justify-between md:gap-4 md:text-left">
           <p className="text-sm text-muted-foreground">
             © {new Date().getFullYear()} Interview Coach. All rights reserved.
           </p>
 
-          <div className="flex items-center gap-6">
-            <span className="inline-flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="relative flex size-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex size-2 rounded-full bg-emerald-400" />
-              </span>
-              All systems operational
-            </span>
-            <ul className="flex items-center gap-3">
-              {SOCIALS.map((s) => {
-                const Icon = s.icon
-                return (
-                  <li key={s.label}>
-                    <a
-                      href={s.href}
-                      aria-label={s.label}
-                      className="grid size-9 place-items-center rounded-lg border border-border text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
-                    >
-                      <Icon className="size-4" />
-                    </a>
-                  </li>
-                )
-              })}
-            </ul>
+          <div className="flex flex-col items-center gap-1.5 sm:flex-row sm:gap-4">
+            <p className="text-sm text-muted-foreground">
+              Designed and developed by{' '}
+              <a
+                href={PORTFOLIO_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-foreground underline decoration-primary/40 underline-offset-4
+                           transition-colors hover:text-primary-200 hover:decoration-primary"
+              >
+                {AUTHOR_NAME}
+              </a>
+            </p>
+            <span aria-hidden className="hidden text-muted-foreground/40 sm:inline">·</span>
+            <p className="text-sm text-muted-foreground">
+              Made with <span className="text-heat-200">❤</span> in India
+            </p>
           </div>
         </div>
       </div>

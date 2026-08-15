@@ -16,6 +16,74 @@ import {
   FileSearch,
 } from 'lucide-react'
 
+/**
+ * Scenes the hero preview rotates through. Each one is a different role so the
+ * carousel demonstrates range rather than just moving for the sake of it.
+ * Keep the copy lengths similar — the card reserves fixed heights so it never
+ * resizes mid-transition.
+ */
+export type HeroScene = {
+  role: string
+  level: string
+  timer: string
+  questionIndex: string
+  question: string
+  answerLead: string
+  answerTail: string
+  score: number
+  delta: number
+  hits: string
+  miss: string
+}
+
+export const HERO_SCENES: HeroScene[] = [
+  {
+    role: 'Frontend Developer',
+    level: 'Mid-level',
+    timer: '04:12',
+    questionIndex: 'Question 3 of 8',
+    question:
+      '"Can you walk me through how you’d optimise the performance of a large React list?"',
+    answerLead:
+      '"I’d start by virtualising the list so only visible rows render, then memoise row components and',
+    answerTail: 'stabilise the callbacks to avoid…"',
+    score: 82,
+    delta: 14,
+    hits: 'Clear, structured answer',
+    miss: 'Add measurable impact',
+  },
+  {
+    role: 'Product Manager',
+    level: 'Senior',
+    timer: '07:38',
+    questionIndex: 'Question 5 of 8',
+    question:
+      '"Tell me about a time you shipped something that failed. What did you change after?"',
+    answerLead:
+      '"We launched a referral flow that converted at under one percent. I pulled the funnel data and found',
+    answerTail: 'the invite step was buried three taps deep…"',
+    score: 76,
+    delta: 9,
+    hits: 'Owned the outcome directly',
+    miss: 'Name the metric it moved to',
+  },
+  {
+    role: 'Data Analyst',
+    level: 'Junior',
+    timer: '02:51',
+    questionIndex: 'Question 2 of 8',
+    question:
+      '"How would you find customers whose spend dropped more than 30% month over month?"',
+    answerLead:
+      '"I’d aggregate spend per customer per month, self-join on the previous month, then filter where',
+    answerTail: 'the ratio falls below zero point seven…"',
+    score: 88,
+    delta: 21,
+    hits: 'Reasoned in clean steps',
+    miss: 'Mention handling null months',
+  },
+]
+
 export const NAV_LINKS = [
   { label: 'Features', href: '#features' },
   { label: 'How It Works', href: '#how-it-works' },
@@ -285,22 +353,34 @@ export const FAQS: Faq[] = [
   },
 ]
 
+// TODO: replace with your real portfolio URL before launch.
+export const PORTFOLIO_URL = 'https://example.com'
+
+export const AUTHOR_NAME = 'Raghunandan Kumar'
+
+export const SOCIAL_LINKS = [
+  { label: 'LinkedIn', href: 'https://www.linkedin.com/in/raghunandan-kumar-730747253/' },
+  { label: 'GitHub', href: 'https://github.com/Raghunandan2813' },
+  { label: 'YouTube', href: 'https://www.youtube.com/@arcdevlabs6815' },
+  { label: 'X', href: 'https://x.com/Raghuna00720939' },
+] as const
+
 export const FOOTER_COLUMNS = [
   {
     title: 'Product',
     links: [
       { label: 'Features', href: '#features' },
       { label: 'How It Works', href: '#how-it-works' },
-      { label: 'Demo', href: '#demo' },
       { label: 'Pricing', href: '#pricing' },
+      { label: 'Interview Practice', href: '/sign-up' },
     ],
   },
   {
     title: 'Resources',
     links: [
-      { label: 'Interview Guides', href: '#' },
       { label: 'Blog', href: '#' },
-      { label: 'Question Bank', href: '#' },
+      { label: 'Interview Guides', href: '#' },
+      { label: 'FAQs', href: '#faq' },
       { label: 'Help Center', href: '#' },
     ],
   },
@@ -308,9 +388,8 @@ export const FOOTER_COLUMNS = [
     title: 'Company',
     links: [
       { label: 'About', href: '#' },
-      { label: 'Careers', href: '#' },
       { label: 'Contact', href: '#' },
-      { label: 'Partners', href: '#' },
+      { label: 'Feedback', href: '#' },
     ],
   },
   {
@@ -318,8 +397,8 @@ export const FOOTER_COLUMNS = [
     links: [
       { label: 'Privacy Policy', href: '#' },
       { label: 'Terms of Service', href: '#' },
-      { label: 'Security', href: '#' },
-      { label: 'Cookies', href: '#' },
+      { label: 'Cookie Policy', href: '#' },
+      { label: 'Refund Policy', href: '#' },
     ],
   },
 ] as const
