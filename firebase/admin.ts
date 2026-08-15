@@ -14,7 +14,7 @@ const initFirebaseAdmin = ()=>{
             })
         })
     }
-    return {
+    return {                                                      
     auth : getAuth(),
     db: getFirestore()
 }

@@ -23,7 +23,7 @@ export function downloadFeedback(feedback: any) {
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(24);
   pdf.setTextColor(255, 255, 255);
-  pdf.text("InterAi // Feedback Report", 20, 25);
+  pdf.text("Interview Coach // Feedback Report", 20, 25);
 
   y = 55;
 
@@ -54,7 +54,7 @@ export function downloadFeedback(feedback: any) {
     pdf.setFontSize(14);
     pdf.setFont("helvetica", "bold");
     pdf.setTextColor(40, 40, 40);
-    pdf.text("Behavioral Analysis", 20, y);
+    pdf.text("Delivery & Presence", 20, y);
     
     pdf.setDrawColor(220, 220, 220);
     pdf.line(20, y + 4, 190, y + 4);
@@ -68,9 +68,9 @@ export function downloadFeedback(feedback: any) {
     pdf.text(`Nervousness: ${feedback.behaviorAnalysis.nervousScore}%`, 80, y);
     
     if (feedback.behaviorAnalysis.cheatingFlags > 0) {
-      pdf.setTextColor(220, 53, 69);
-      pdf.setFont("helvetica", "bold");
-      pdf.text(`Suspicious Activity Flags: ${feedback.behaviorAnalysis.cheatingFlags}`, 140, y);
+      pdf.setTextColor(180, 120, 20);
+      pdf.setFont("helvetica", "normal");
+      pdf.text(`Face not visible: ${feedback.behaviorAnalysis.cheatingFlags} samples`, 140, y);
     }
     y += 18;
   }
@@ -181,5 +181,5 @@ export function downloadFeedback(feedback: any) {
   /* -------------------------------------------------------------------------- */
   /*                                SAVE FILE                                   */
   /* -------------------------------------------------------------------------- */
-  pdf.save("InterAi-Feedback.pdf");
+  pdf.save("Interview-Coach-Feedback.pdf");
 }
