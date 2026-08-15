@@ -46,6 +46,11 @@ interface LiveAnswerFeedback {
   suggestion: string;
 }
 
+// Daily (which Vapi runs on) reports normal call teardown through the same
+// error channel it uses for real failures. These are lifecycle notices, not
+// problems, and must never reach the user as a red toast.
+const BENIGN_CALL_ERROR = /meeting (has )?ended|call (has )?ended|ejected|left the meeting/i;
+
 const FILLER_WORD_REGEX =
   /\b(um+|uh+|erm|ah+|like|you know|actually|basically|literally)\b/gi;
 
@@ -126,10 +131,26 @@ const Agent = ({userName , userId, type, interviewId, questions} : AgentProps) =
   const [cameraConsent, setCameraConsent] =
     useState<'pending' | 'granted' | 'declined'>('pending');
   const callStartedAt = React.useRef<number | null>(null);
+  // Guards against stopping a call twice — the End button, the idle guard and
+  // Vapi's own duration cap can all race, and a second stop() on an already
+  // closed meeting is what raises "Meeting has ended".
+  const stopRequested = React.useRef(false);
   // Last moment either party said anything, used to detect an abandoned call.
   const lastActivityAt = React.useRef<number>(Date.now());
   const [isStarting, setIsStarting] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
+  // Single path for ending a call, so the End button, the idle guard and any
+  // future caller can't stack stop() requests on a closed meeting.
+  const stopCall = React.useCallback(() => {
+    if (stopRequested.current) return;
+    stopRequested.current = true;
+    try {
+      vapi.stop();
+    } catch (e) {
+      console.debug('vapi.stop() ignored', e);
+    }
+  }, []);
 
   const webcamRef = React.useRef<Webcam>(null);
   const [modelsLoaded, setModelsLoaded] = useState(false);
@@ -161,9 +182,12 @@ const Agent = ({userName , userId, type, interviewId, questions} : AgentProps) =
     const onCallStart = () => {
       callStartedAt.current = Date.now();
       lastActivityAt.current = Date.now();
+      stopRequested.current = false;
       setCallStatus(CallStatus.ACTIVE);
     };
     const onCallEnd = () => {
+      // The meeting is already closed; nothing should call stop() after this.
+      stopRequested.current = true;
       setCallStatus(CallStatus.FINISHED);
       // Meter what the call actually consumed. The server clamps this to the
       // assistant's hard ceiling, so a forged value can't corrupt the total.
@@ -207,12 +231,20 @@ const Agent = ({userName , userId, type, interviewId, questions} : AgentProps) =
     // Vapi surfaces microphone and connection failures here. Swallowing them
     // into console.log makes a dead mic look like a working call.
     const onError = (error: any) => {
-      console.error('Vapi error', error);
       const message =
         error?.errorMsg ||
         error?.error?.message ||
         error?.message ||
         (typeof error === 'string' ? error : null);
+
+      // A finished interview is a success. Reporting it as an error told users
+      // their session had failed right as it completed.
+      if (message && BENIGN_CALL_ERROR.test(message)) {
+        console.debug('Vapi lifecycle:', message);
+        return;
+      }
+
+      console.error('Vapi error', error);
       toast.error(
         message
           ? `Call error: ${message}`
@@ -253,7 +285,7 @@ const Agent = ({userName , userId, type, interviewId, questions} : AgentProps) =
       clearInterval(idleCheckId);
       toast.info(`Ended the call after ${IDLE_TIMEOUT_SECONDS} seconds of silence.`);
       setCallStatus(CallStatus.FINISHED);
-      vapi.stop();
+      stopCall();
     }, 5000);
 
     return () => clearInterval(idleCheckId);
@@ -361,6 +393,9 @@ const Agent = ({userName , userId, type, interviewId, questions} : AgentProps) =
   const handleCall = async () => {
     if (isStarting) return;
     setIsStarting(true);
+    // Fresh call: allow a stop again, in case the previous attempt never
+    // reached call-start.
+    stopRequested.current = false;
 
     // Claim fullscreen while we still hold the gesture, then verify budget.
     if (type === 'interview') enterFullscreen();
@@ -406,8 +441,7 @@ const Agent = ({userName , userId, type, interviewId, questions} : AgentProps) =
 
 const handleDisconnect = async ()=>{
   setCallStatus(CallStatus.FINISHED);
-
-  vapi.stop();
+  stopCall();
 }
 
   // Wall-clock timer for the stage header.
