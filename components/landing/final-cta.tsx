@@ -1,4 +1,4 @@
-import { ArrowRight, ShieldCheck } from 'lucide-react'
+import { ArrowRight, ShieldCheck, Play } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Reveal } from './reveal'
 
@@ -16,22 +16,30 @@ export function FinalCta() {
             </div>
 
             <h2 className="mx-auto max-w-2xl font-display text-3xl font-semibold tracking-tight text-balance sm:text-4xl md:text-5xl md:leading-[1.1]">
-              Your Next Interview Could{' '}
-              <span className="gradient-text">Change Everything</span>
+              Ready to ace your{' '}
+              <span className="gradient-text">next interview?</span>
             </h2>
             <p className="mx-auto mt-5 max-w-xl leading-relaxed text-muted-foreground text-pretty">
-              Practise like it's the real thing today. Build the confidence and clarity
-              that turns opportunities into offers.
+              Practice with realistic AI interviews and receive actionable feedback.
             </p>
 
-            <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <div className="mt-9 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
               <Button
                 asChild
                 size="lg"
                 className="h-12 bg-gradient-to-r from-primary to-heat-200 px-7 text-base text-primary-foreground shadow-lg shadow-primary/30 hover:opacity-90"
               ><a href="/sign-up">
-                Start Practising for Free
+                Start Your Free Interview
                 <ArrowRight className="size-4" />
+              </a></Button>
+              <Button
+                asChild
+                variant="outline"
+                size="lg"
+                className="h-12 px-7 text-base"
+              ><a href="#demo">
+                <Play className="size-4" />
+                View Demo
               </a></Button>
             </div>
 
