@@ -1,6 +1,6 @@
-# 🎙️ InterAI — AI-Powered Mock Interview & Proctoring Platform
+# 🎙️ Interview Coach — AI-Powered Mock Interview & Proctoring Platform
 
-**InterAI** is a premium, cutting-edge web application designed to help candidates prepare for technical and behavioral interviews using real-time AI agents, live webcam proctoring, and comprehensive feedback report cards.
+**Interview Coach** is a premium, cutting-edge web application designed to help candidates prepare for technical and behavioral interviews using real-time AI agents, live webcam proctoring, and comprehensive feedback report cards.
 
 ---
 
@@ -45,7 +45,12 @@ FIREBASE_PRIVATE_KEY="your_private_key"
 # AI Config
 GROQ_API_KEY=your_groq_key
 NEXT_PUBLIC_VAPI_ASSISTANT_ID=your_vapi_assistant_id
-NEXT_PUBLIC_VAPI_PUBLIC_KEY=your_vapi_public_key
+NEXT_PUBLIC_VAPI_WEB_TOKEN=your_vapi_public_key
+
+# Shared secret for Vapi's server-to-server tool call. Set the same value as an
+# "x-vapi-secret" header on the generate assistant's tool in the Vapi dashboard.
+# Never put this in a NEXT_PUBLIC_ variable — it would ship to the browser.
+VAPI_SERVER_SECRET=generate_a_long_random_value
 ```
 
 ### 3. Run Development Server
