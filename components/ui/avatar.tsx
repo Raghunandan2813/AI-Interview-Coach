@@ -13,7 +13,7 @@ function Avatar({
   size?: "default" | "sm" | "lg"
 }) {
   return (
-    <AvatarPrimitive.Root
+    <AvatarPrimitive.Root   
       data-slot="avatar"
       data-size={size}
       className={cn(

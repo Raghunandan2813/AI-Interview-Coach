@@ -8,7 +8,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 
 // The 4 main links shown on the primary bar
 const mainLinks = [
-  { imgURL: Home, route: '/', label: 'Home' },
+  { imgURL: Home, route: '/home', label: 'Home' },
   { imgURL: LayoutDashboard, route: '/dashboard', label: 'Dashboard' },
   { imgURL: Mic, route: '/interview', label: 'Interview' },
   { imgURL: Gamepad2, route: '/quiz', label: 'Quiz' },
@@ -16,7 +16,7 @@ const mainLinks = [
 
 // The master directory for the "More" popout
 const allLinks = [
-  { imgURL: Home, route: '/', label: 'Home' },
+  { imgURL: Home, route: '/home', label: 'Home' },
   { imgURL: LayoutDashboard, route: '/dashboard', label: 'Dashboard' },
   { imgURL: Mic, route: '/interview', label: 'Interview' },
   { imgURL: Gamepad2, route: '/quiz', label: 'Quiz' },
@@ -76,7 +76,7 @@ export default function MobileNav() {
                   >
                      <div className={cn(
                         "w-8 h-8 rounded-full flex items-center justify-center transition-colors shrink-0",
-                         isActive ? "bg-primary-200 text-dark-100 shadow-[0_0_10px_rgba(167,139,250,0.5)]" : "bg-dark-300 text-light-400"
+                         isActive ? "bg-primary-200 text-dark-100 shadow-[0_0_10px_rgba(0,225,240,0.5)]" : "bg-dark-300 text-light-400"
                      )}>
                         <Icon size={16} />
                      </div>
@@ -115,12 +115,12 @@ export default function MobileNav() {
                 )}>
                   <Icon size={22} className={cn(
                     "transition-all duration-300",
-                    isActive ? "text-primary-200 drop-shadow-[0_0_12px_rgba(167,139,250,1)]" : "text-light-600"
+                    isActive ? "text-primary-200 drop-shadow-[0_0_12px_rgba(0,225,240,1)]" : "text-light-600"
                   )} />
                 </div>
                 <span className={cn(
                   "text-[10px] mt-1 transition-colors leading-none",
-                  isActive ? "text-primary-200 font-bold drop-shadow-[0_0_5px_rgba(167,139,250,0.5)]" : "font-medium text-light-600"
+                  isActive ? "text-primary-200 font-bold drop-shadow-[0_0_5px_rgba(0,225,240,0.5)]" : "font-medium text-light-600"
                 )}>
                   {link.label}
                 </span>

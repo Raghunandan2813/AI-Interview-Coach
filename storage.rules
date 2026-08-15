@@ -1,0 +1,11 @@
+rules_version = '2';
+
+// No client-side uploads or downloads today. Deny everything until a feature
+// needs it, then scope the rule to that path and check request.auth.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

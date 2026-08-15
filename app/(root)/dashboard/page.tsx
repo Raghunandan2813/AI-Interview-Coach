@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/action/auth.action";
 import { getFeedbacksByUserId, getInterviewsByUserId } from "@/lib/action/general.action";
 import ProgressChart from "@/components/ProgressChart";
 import InterviewCard from "@/components/InterviewCard";
+import { ScoreMeter } from "@/components/ScoreMeter";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -20,8 +21,8 @@ const Dashboard = async () => {
     );
   }
 
-  const userFeedbacks = (await getFeedbacksByUserId(user.id)) || [];
-  const userInterviews = (await getInterviewsByUserId(user.id)) || [];
+  const userFeedbacks = (await getFeedbacksByUserId()) || [];
+  const userInterviews = (await getInterviewsByUserId()) || [];
   const interviewMap = new Map(userInterviews.map((interview) => [interview.id, interview]));
 
   const validPairs = userFeedbacks.map((feedback, index) => {
@@ -53,41 +54,56 @@ const Dashboard = async () => {
 
   const chartData = [...chartDataRaw].reverse();
 
-  const averageScore = validFeedbackCount > 0 
-    ? Math.round(totalScoreSum / validFeedbackCount) 
+  const averageScore = validFeedbackCount > 0
+    ? Math.round(totalScoreSum / validFeedbackCount)
     : 0;
+
+  const highestScore =
+    chartData.length > 0 ? Math.max(...chartData.map((d) => d.score)) : 0;
 
   return (
     <section className="flex flex-col gap-10 pb-10">
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold text-light-100 tracking-tight">Your Dashboard</h1>
-        <p className="text-light-400">Track your interview performance and progress over time.</p>
+        <p className="eyebrow">Your record</p>
+        <h1 className="text-3xl md:text-4xl font-extrabold text-light-100 tracking-tight">
+          {user.name?.split(" ")[0] ?? "Your"} stats
+        </h1>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="flex flex-col p-6 rounded-2xl border border-white/10 bg-dark-200/50 shadow-sm">
-          <span className="text-sm font-medium text-light-400">Total Interviews Taken</span>
-          <span className="text-4xl font-bold text-primary-200 mt-2">{pastInterviews.length}</span>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="panel flex flex-col gap-1">
+          <span className="eyebrow">Sessions run</span>
+          <span className="stat-num text-5xl text-light-100 mt-1">{pastInterviews.length}</span>
         </div>
-        <div className="flex flex-col p-6 rounded-2xl border border-white/10 bg-dark-200/50 shadow-sm">
-          <span className="text-sm font-medium text-light-400">Average Score</span>
-          <span className="text-4xl font-bold text-primary-200 mt-2">{averageScore}</span>
+        <div className="panel flex flex-col gap-1">
+          <span className="eyebrow">Average score</span>
+          <span className="stat-num text-5xl text-primary-200 mt-1">{averageScore}</span>
+          {chartData.length > 0 && (
+            <ScoreMeter score={averageScore} className="mt-3" />
+          )}
         </div>
-        <div className="flex flex-col p-6 rounded-2xl border border-white/10 bg-dark-200/50 shadow-sm">
-          <span className="text-sm font-medium text-light-400">Highest Score</span>
-          <span className="text-4xl font-bold text-primary-200 mt-2">
-            {chartData.length > 0 ? Math.max(...chartData.map(d => d.score)) : 0}
-          </span>
+        <div className="panel flex flex-col gap-1">
+          <span className="eyebrow">Personal best</span>
+          <span className="stat-num text-5xl text-heat-200 mt-1">{highestScore}</span>
+          {chartData.length > 0 && (
+            <ScoreMeter score={highestScore} className="mt-3" />
+          )}
         </div>
       </div>
 
       <div className="flex flex-col gap-5">
-        <h2 className="text-xl font-semibold text-light-100">Performance Over Time</h2>
+        <div className="flex flex-col gap-1">
+          <p className="eyebrow">Trajectory</p>
+          <h2 className="text-xl font-extrabold tracking-tight text-light-100">Score over time</h2>
+        </div>
         <ProgressChart data={chartData} />
       </div>
 
       <div className="flex flex-col gap-5 mt-4">
-        <h2 className="text-xl font-semibold text-light-100">Past Interviews</h2>
+        <div className="flex flex-col gap-1">
+          <p className="eyebrow">History</p>
+          <h2 className="text-xl font-extrabold tracking-tight text-light-100">Past sessions</h2>
+        </div>
         <div className="interviews-section">
           {pastInterviews.length > 0 ? (
             pastInterviews.map((interview, index) => (

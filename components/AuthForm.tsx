@@ -52,46 +52,49 @@ const AuthForm = ({ type }: AuthFormProps) => {
     setIsLoading(true);
     try {
       if (type === "sign-up") {
-         
-          if(type === 'sign-up'){
-            const {name , email, password} = values;
-            const userCredentials = await createUserWithEmailAndPassword(auth, email , password)
-          
-           const result = await signUp({
-            uid: userCredentials.user.uid,
-            name: name!,
-            email,
-            password,
-          })
-            if(!result?.success){
-            toast.error(result?.message);
-            setIsLoading(false);
-            return;
+        const {name , email, password} = values;
+        const userCredentials = await createUserWithEmailAndPassword(auth, email , password)
+
+        const result = await signUp({
+          uid: userCredentials.user.uid,
+          name: name!,
+          email,
+          password,
+        })
+
+        if(!result?.success){
+          // The credential already exists at this point. Leaving it behind
+          // creates an account that can never sign in, because there is no
+          // matching user document. Roll it back.
+          try {
+            await userCredentials.user.delete();
+          } catch (cleanupError) {
+            console.error('Failed to roll back partial signup', cleanupError);
           }
-          }
-         
-          
-          toast.success('Account created successfully. Please sign in.');
-          router.push('/sign-in')
+          toast.error(result?.message ?? 'Could not create your account.');
+          return;
+        }
+
+        toast.success('Account created successfully. Please sign in.');
+        router.push('/sign-in')
       } else {
-
-
         const {email , password } = values ;
-       
+
         const userCredential = await signInWithEmailAndPassword(auth , email , password );
         const idToken = await userCredential.user.getIdToken();
         if(!idToken){
           toast.error('Sign in failed')
-          setIsLoading(false);
           return;
         }
-        await signIn({
-          email, idToken
-        })
-        toast.success('Sign in successfully.');
-        router.push('/')
 
-        
+        const result = await signIn({ email, idToken })
+        if(!result?.success){
+          toast.error(result?.message ?? 'Sign in failed.');
+          return;
+        }
+
+        toast.success('Signed in successfully.');
+        router.push('/home')
       }
     } catch (error) {
       console.log(error);
@@ -123,9 +126,14 @@ const AuthForm = ({ type }: AuthFormProps) => {
         return;
       }
       
-      await signIn({ email: email || "", idToken });
+      const result = await signIn({ email: email || "", idToken });
+      if (!result?.success) {
+        toast.error(result?.message ?? "Google Sign-In failed.");
+        return;
+      }
+
       toast.success("Signed in with Google successfully.");
-      router.push("/");
+      router.push("/home");
     } catch (error) {
       console.error(error);
       toast.error("There was an error with Google Sign-In.");
@@ -136,20 +144,27 @@ const AuthForm = ({ type }: AuthFormProps) => {
 
   const isSignin = type === "sign-in";
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: -50 }}
+    <motion.div
+      // a short settle rather than a 50px drop — the form should feel placed,
+      // not thrown onto the screen
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
-      className="card-border w-full sm:w-[480px] flex flex-col overflow-hidden max-sm:mx-4"
+      transition={{ duration: 0.35, ease: "easeOut" }}
+      className="card-border w-full sm:w-[460px] flex flex-col overflow-hidden max-sm:mx-4
+                 bg-dark-200/80 backdrop-blur-2xl shadow-[0_28px_90px_-28px_rgba(0,0,0,0.95)]"
     >
       <div className="flex flex-col gap-6 fill-card-foreground py-10 px-6 sm:px-8">
         <div className="flex flex-col items-center gap-3 text-center">
-          <Image src="/roboo.png" alt="logo" height={36} width={42} className="shrink-0" />
-          <p className="text-sm font-medium text-primary-200">Boost Your Prep With AI</p>
+          <Image src="/roboo.png" alt="" height={36} width={42} className="shrink-0" />
+          <p className="eyebrow">Interview training</p>
         </div>
 
-        <h2 className="text-2xl font-semibold text-light-100">
-          {type === "sign-in" ? "Sign in" : "Create account"}
+        <h2 className="text-3xl font-extrabold tracking-tight text-light-100">
+          {type === "sign-in" ? (
+            <>Welcome <span className="heat-text">back</span></>
+          ) : (
+            <>Get in the <span className="heat-text">arena</span></>
+          )}
         </h2>
 
         <Form {...form}>

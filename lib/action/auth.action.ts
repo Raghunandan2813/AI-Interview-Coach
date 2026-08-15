@@ -1,20 +1,11 @@
 
 'use server';
 
-import { messaging } from "firebase-admin";
-import { success } from "zod";
 import { db, auth } from "@/firebase/admin";
-
+import { getSessionUser } from "@/lib/session";
 import { cookies } from "next/headers";
-import { Collection } from "radix-ui/internal";
-//import {  DocumentData } from "firebase-admin/firestore";
-//import { User } from "firebase/auth";
-
-import { CollectionReference, doc, DocumentData, limit } from "firebase/firestore";
-
 
 const ONE_WEEK = 60*60*24*7;
-//import { UserRecord } from "firebase-admin/auth";
 export async function signUp(params: SignUpParams){
     const {uid , name , email} = params;
     try{
@@ -49,16 +40,16 @@ export async function signUp(params: SignUpParams){
 }
  
 export async function signIn(params: SignInParams){
-    const {email, idToken } = params;
+    const { idToken } = params;
     try{
-        const userRecord = await auth.getUserByEmail(email);
-        if(!userRecord){
-            return {
-                success : false,
-                message: 'User does not exist. Create an account instead.'
-            }
-        }
+        // No getUserByEmail lookup here: the browser has already authenticated
+        // and handed us an idToken, and createSessionCookie rejects an invalid
+        // one. The extra round trip only slowed every sign-in down.
         await setSessionCookie(idToken)
+        return {
+            success: true,
+            message: 'Signed in successfully.'
+        }
     }catch(e){
         console.log(e);
         return{
@@ -92,33 +83,16 @@ export async function signOut() {
 }
 
 
+// Thin wrapper over the request-cached implementation in lib/session.ts, so
+// the twenty-odd callers across the app share one session lookup per request.
 export async function getCurrentUser() : Promise<User | null> {
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get('session')?.value;
-    if(!sessionCookie) return null;
-
-    try{
-            const decodeClaims =await auth.verifySessionCookie(sessionCookie , true);
-            const userRecord = await db.collection('users').doc(decodeClaims.uid).get();
-            
-            
-            if(!userRecord.exists) return null;
-           
-
-            return {
-                ... userRecord.data(),
-                id: userRecord.id,
-            } as User
-}catch(e){
-
-    console.log(e);
-    return null;
-}
+    return getSessionUser();
 }
 
 
 export async function isAuthenticated(){
+    // No logging here: this runs on every auth-guarded render, and printing the
+    // user object put email addresses into the server logs on every request.
     const user = await getCurrentUser();
-    console.log(user)
-    return !!user; 
+    return !!user;
 }

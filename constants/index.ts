@@ -97,8 +97,30 @@ export const mappings = {
   "aws amplify": "amplify",
 };
 
+// Every second of a call costs money across four vendors, so the ceiling is set
+// explicitly rather than inherited from Vapi's 600s default. Vapi enforces this
+// server-side, which makes it the one spend control a user with devtools open
+// cannot route around.
+//
+// NOTE: silenceTimeoutSeconds is not exposed on the web SDK's CreateAssistantDTO
+// — set it on the assistant in the Vapi dashboard so a candidate who walks away
+// mid-call doesn't burn the full 15 minutes.
+export const MAX_INTERVIEW_SECONDS = 900; // 15 minutes
+
+// Because the interview assistant is transient, there is no silence timeout to
+// configure for it anywhere. The browser ends a call that has gone quiet
+// instead. A tampered client can disable this — MAX_INTERVIEW_SECONDS above is
+// what bounds that case.
+export const IDLE_TIMEOUT_SECONDS = 45;
+
+// Free practice allowance per calendar month. This lives here rather than in
+// usage.action.ts because a "use server" module may only export async
+// functions — a plain constant there is a build error.
+export const MONTHLY_FREE_SECONDS = 60 * 60; // 60 minutes
+
 export const interviewer: CreateAssistantDTO = {
   name: "Interviewer",
+  maxDurationSeconds: MAX_INTERVIEW_SECONDS,
   firstMessage:
     "Hello! Thank you for taking the time to speak with me today. I'm excited to learn more about you and your experience.",
   transcriber: {
@@ -117,7 +139,9 @@ export const interviewer: CreateAssistantDTO = {
   },
   model: {
     provider: "openai",
-    model: "gpt-4",
+    // gpt-4o-mini, not gpt-4: an order of magnitude cheaper and markedly faster
+    // to first token, which is what actually matters for live speech.
+    model: "gpt-4o-mini",
     messages: [
       {
         role: "system",
@@ -156,7 +180,9 @@ End the conversation on a polite and positive note.
 };
 
 export const feedbackSchema = z.object({
-  totalScore: z.number(),
+  // Optional because the total is computed in lib/scoring.ts from the category
+  // scores. If the model still volunteers one, it's ignored.
+  totalScore: z.number().optional(),
 
   categoryScores: z.array(
     z.object({

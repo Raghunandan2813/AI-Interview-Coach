@@ -19,7 +19,7 @@ const page = async () => {
       
       {/* Hero Header */}
       <div className="flex flex-col gap-3">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary-200/30 bg-primary-200/10 w-fit mb-2 shadow-[0_0_15px_rgba(167,139,250,0.15)]">
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary-200/30 bg-primary-200/10 w-fit mb-2 shadow-[0_0_15px_rgba(0,225,240,0.15)]">
           <Sparkles size={16} className="text-primary-200" />
           <span className="text-sm font-semibold text-primary-200 uppercase tracking-wider">AI Studio</span>
         </div>
@@ -55,7 +55,7 @@ const page = async () => {
 
         {/* Right Bento: Voice AI */}
         <div className="flex flex-col relative rounded-[32px] border border-white/10 blue-gradient-dark shadow-[var(--shadow-soft)] overflow-hidden h-full group hover:border-primary-200/30 transition-all">
-          <div className="absolute pointer-events-none inset-0 bg-[radial-gradient(circle_at_top_right,rgba(124,58,237,0.2),transparent_60%)]" />
+          <div className="absolute pointer-events-none inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,45,120,0.18),transparent_60%)]" />
           <div className="absolute inset-0 bg-[url('/pattern.png')] bg-cover opacity-10 pointer-events-none" />
           
           <div className="p-8 md:p-10 border-b border-primary-200/10 relative overflow-hidden z-10 lg:min-h-[220px]">
@@ -66,7 +66,7 @@ const page = async () => {
                  <h2 className="text-3xl font-bold text-light-100">
                     Voice Assistant
                  </h2>
-                 <span className="text-[10px] bg-primary-200 text-dark-100 px-2 py-0.5 rounded-md font-bold uppercase tracking-wider shadow-[0_0_10px_rgba(167,139,250,0.8)]">Beta</span>
+                 <span className="text-[10px] bg-primary-200 text-dark-100 px-2 py-0.5 rounded-md font-bold uppercase tracking-wider shadow-[0_0_10px_rgba(0,225,240,0.8)]">Beta</span>
              </div>
              
              <p className="text-light-400 text-sm leading-relaxed max-w-xs relative z-10">

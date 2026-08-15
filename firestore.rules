@@ -1,0 +1,17 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Every read and write in this app goes through the Firebase Admin SDK
+    // inside Next.js server actions, and the Admin SDK bypasses these rules
+    // entirely. Nothing should ever reach Firestore directly from a browser.
+    //
+    // If a feature ever needs direct client access, add a narrow match block
+    // above this one that checks `request.auth.uid` against the document's
+    // userId field. Do not loosen this catch-all.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

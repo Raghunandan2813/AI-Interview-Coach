@@ -1,104 +1,129 @@
 @import "tailwindcss";
 
-
 @custom-variant dark (&:is(.dark *));
 
+/* ==========================================================================
+   ARENA
+   Interview practice as competitive training.
+
+   Two accents, not one: electric cyan carries "live / go / primary", hot pink
+   carries "heat / record / streak". A single neon pop on black is the tired
+   look; a pair that each mean something reads as a system.
+
+   The ground is warm-biased near-black (#0D0A0F, a touch of magenta) rather
+   than the usual blue-black, so the pink belongs to it instead of sitting on
+   top of it.
+
+   Score colours are a deliberately separate family — they must never be
+   confused with brand accents, because they carry meaning.
+   ========================================================================== */
+
 @theme {
-  --color-success-100: #34d399;
-  --color-success-200: #10b981;
-  --color-destructive-100: #f87171;
-  --color-destructive-200: #ef4444;
+  /* --- brand accents ------------------------------------------------- */
+  /* primary-* keeps its name so every existing utility retheme for free */
+  --color-primary-100: #7DF3FF;
+  --color-primary-200: #00E1F0;
+  --color-primary-300: #00A9BC;
 
-  --color-primary-100: #c4b5fd;
-  --color-primary-200: #a78bfa;
-  --color-primary-300: #7c3aed;
+  --color-heat-100: #FF6BA3;
+  --color-heat-200: #FF2D78;
+  --color-heat-300: #C7005A;
 
-  --color-light-100: #e2e8f0;
-  --color-light-400: #94a3b8;
-  --color-light-600: #64748b;
-  --color-light-800: #334155;
+  /* --- score semantics (never used as brand colour) ------------------- */
+  --color-tier-weak: #FF4D6D;
+  --color-tier-mid: #FFB020;
+  --color-tier-strong: #2DD46E;
 
-  --color-dark-100: #0f0f12;
-  --color-dark-200: #1a1b21;
-  --color-dark-300: #25262d;
+  --color-success-100: #2DD46E;
+  --color-success-200: #21B058;
+  --color-destructive-100: #FF4D6D;
+  --color-destructive-200: #E0324F;
 
-  --font-mona-sans: "Mona Sans", sans-serif;
+  /* --- warm neutrals --------------------------------------------------- */
+  /* 300 and 500 exist because markup already referenced them; without these
+     that text falls back to an inherited colour and silently loses its
+     hierarchy. */
+  --color-light-100: #F4F0F6;
+  --color-light-300: #CFC7D6;
+  --color-light-400: #A79FAE;
+  --color-light-500: #8A8292;
+  --color-light-600: #6E6676;
+  --color-light-800: #3A3440;
 
-  --bg-pattern: url("/pattern.png");
-  --shadow-soft: 0 4px 24px -4px rgb(0 0 0 / 0.25);
-  --shadow-glow: 0 0 40px -8px rgb(124 58 237 / 0.35);
+  --color-dark-100: #0D0A0F;
+  --color-dark-200: #17131B;
+  --color-dark-300: #221C27;
+
+  --font-mona-sans: var(--font-mona-sans), "Mona Sans", sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  /* the landing kit asks for font-display; Arena answers with Mona Sans so
+     marketing and product speak in one voice */
+  --font-display: var(--font-mona-sans), "Mona Sans", sans-serif;
+
+  --shadow-soft: 0 4px 24px -6px rgb(0 0 0 / 0.6);
+  --shadow-glow: 0 0 32px -6px rgb(0 225 240 / 0.45);
+  --shadow-heat: 0 0 32px -6px rgb(255 45 120 / 0.45);
 }
 
 :root {
-  --radius: 0.75rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --radius: 0.875rem;
+  --background: #0D0A0F;
+  --foreground: #F4F0F6;
+  --card: #17131B;
+  --card-foreground: #F4F0F6;
+  --popover: #17131B;
+  --popover-foreground: #F4F0F6;
+  --primary: #00E1F0;
+  --primary-foreground: #0D0A0F;
+  --secondary: #221C27;
+  --secondary-foreground: #F4F0F6;
+  --muted: #221C27;
+  --muted-foreground: #A79FAE;
+  --accent: #221C27;
+  --accent-foreground: #F4F0F6;
+  --destructive: #FF4D6D;
+  --border: rgb(255 255 255 / 0.10);
+  --input: rgb(255 255 255 / 0.14);
+  --ring: #00E1F0;
+
+  --chart-1: #00E1F0;
+  --chart-2: #FF2D78;
+  --chart-3: #FFB020;
+  --chart-4: #2DD46E;
+  --chart-5: #7DF3FF;
+
+  /* The landing kit gradients are written as `from-primary to-cyan`. In Arena
+     primary is already cyan, so --cyan resolves to the heat pink and those
+     gradients become the brand's cyan-to-pink sweep rather than a flat wash. */
+  --cyan: #FF2D78;
 }
 
+/* Arena commits to one look. The .dark class stays because the document sets
+   it and the shadcn primitives key off it, but both blocks resolve the same. */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: var(--light-100);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: #0D0A0F;
+  --foreground: #F4F0F6;
+  --card: #17131B;
+  --card-foreground: #F4F0F6;
+  --popover: #17131B;
+  --popover-foreground: #F4F0F6;
+  --primary: #00E1F0;
+  --primary-foreground: #0D0A0F;
+  --secondary: #221C27;
+  --secondary-foreground: #F4F0F6;
+  --muted: #221C27;
+  --muted-foreground: #A79FAE;
+  --accent: #221C27;
+  --accent-foreground: #F4F0F6;
+  --destructive: #FF4D6D;
+  --border: rgb(255 255 255 / 0.10);
+  --input: rgb(255 255 255 / 0.14);
+  --ring: #00E1F0;
+  --cyan: #FF2D78;
 }
 
 @theme inline {
+  --color-cyan: var(--cyan);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -126,31 +151,34 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgb(0 225 240 / 0.10), transparent),
+      radial-gradient(ellipse 60% 50% at 90% 10%, rgb(255 45 120 / 0.07), transparent);
+    background-attachment: fixed;
+  }
+
+  h1 {
+    @apply text-4xl font-extrabold tracking-tight;
+    text-wrap: balance;
+  }
+  h2 {
+    @apply text-2xl font-extrabold tracking-tight;
+    text-wrap: balance;
+  }
+  h3 {
+    @apply text-xl font-bold tracking-tight;
   }
   p {
     @apply text-light-100;
-  }
-  h2 {
-    @apply text-3xl font-semibold;
-  }
-  h3 {
-    @apply text-2xl font-semibold;
   }
   ul {
     @apply list-disc list-inside;
@@ -158,74 +186,132 @@
   li {
     @apply text-light-100;
   }
+
+  ::selection {
+    @apply bg-primary-200 text-dark-100;
+  }
 }
 
 @layer components {
+
+  /* --- eyebrow / label ------------------------------------------------ */
+  .eyebrow {
+    @apply font-mono text-[11px] uppercase tracking-[0.18em] text-light-600;
+  }
+
+  /* --- numeric readouts ----------------------------------------------- */
+  .stat-num {
+    @apply font-mono font-bold tabular-nums tracking-tight;
+  }
+
+  /* --- buttons -------------------------------------------------------- */
+  .btn-primary {
+    @apply w-fit inline-flex items-center justify-center gap-2 px-6 py-2.5 min-h-11 cursor-pointer
+           !rounded-xl !font-extrabold uppercase tracking-wide text-sm
+           !text-dark-100 !bg-primary-200
+           transition-all duration-200
+           hover:!bg-primary-100 hover:shadow-[var(--shadow-glow)] hover:-translate-y-0.5
+           active:translate-y-0;
+  }
+
+  .btn-secondary {
+    @apply w-fit inline-flex items-center justify-center gap-2 px-6 py-2.5 min-h-11 cursor-pointer
+           !rounded-xl !font-bold text-sm
+           !bg-dark-300 !text-light-100 border border-white/10
+           transition-all duration-200
+           hover:!bg-dark-200 hover:border-primary-200/40;
+  }
+
   .btn-call {
-    @apply inline-flex items-center justify-center px-8 py-3.5 font-semibold text-sm text-dark-100 bg-success-100 rounded-xl shadow-[var(--shadow-soft)] transition-all duration-200 hover:bg-success-200 hover:scale-[1.02] active:scale-[0.98] min-w-32 cursor-pointer overflow-visible;
+    @apply relative inline-flex items-center justify-center min-w-40 px-8 py-4 cursor-pointer
+           rounded-xl font-extrabold uppercase tracking-[0.1em] text-sm
+           text-dark-100 bg-primary-200 overflow-visible
+           shadow-[var(--shadow-glow)]
+           transition-all duration-200
+           hover:bg-primary-100 hover:scale-[1.03]
+           active:scale-[0.98];
   }
 
   .btn-disconnect {
-    @apply inline-flex items-center justify-center px-8 py-3.5 text-sm font-semibold text-white bg-destructive-100 rounded-xl shadow-[var(--shadow-soft)] transition-all duration-200 hover:bg-destructive-200 min-w-32 cursor-pointer;
+    @apply inline-flex items-center justify-center min-w-40 px-8 py-4 cursor-pointer
+           rounded-xl font-extrabold uppercase tracking-[0.1em] text-sm
+           text-white bg-heat-200
+           shadow-[var(--shadow-heat)]
+           transition-all duration-200
+           hover:bg-heat-300 hover:scale-[1.03]
+           active:scale-[0.98];
   }
 
   .btn-upload {
     @apply flex min-h-14 w-full items-center justify-center gap-1.5 rounded-xl border border-input bg-dark-200;
   }
 
-  .btn-primary {
-    @apply w-fit !bg-primary-200 !text-dark-100 hover:!bg-primary-100 !rounded-xl !font-semibold px-6 py-2.5 cursor-pointer min-h-11 transition-all duration-200 hover:shadow-[var(--shadow-glow)];
-  }
-
-  .btn-secondary {
-    @apply w-fit !bg-dark-200 !text-primary-100 hover:!bg-dark-300 !rounded-xl !font-semibold px-6 py-2.5 cursor-pointer min-h-11 border border-white/10 transition-all duration-200;
-  }
-
+  /* --- surfaces -------------------------------------------------------- */
   .card-border {
-    @apply rounded-2xl w-fit border border-white/10 bg-dark-200/80 shadow-[var(--shadow-soft)];
+    @apply relative rounded-2xl border border-white/10 bg-dark-200 shadow-[var(--shadow-soft)] overflow-hidden;
+  }
+
+  /* bright top edge: reads like a lit panel rather than a flat box */
+  .card-border::before {
+    content: "";
+    @apply absolute inset-x-0 top-0 h-px pointer-events-none;
+    background: linear-gradient(90deg, transparent, rgb(0 225 240 / 0.5), transparent);
   }
 
   .card {
     @apply dark-gradient rounded-2xl min-h-full;
   }
 
+  .panel {
+    @apply rounded-2xl border border-white/10 bg-dark-200/70 backdrop-blur-sm p-5 md:p-6;
+  }
+
+  /* --- forms ----------------------------------------------------------- */
   .form {
     @apply w-full space-y-1;
 
     .label {
-      @apply !text-light-100 !font-medium !text-sm;
+      @apply !text-light-400 !font-bold !text-xs uppercase tracking-wider;
     }
 
     .input {
-      @apply !bg-dark-300 !rounded-xl !min-h-12 !px-4 !border-white/10 placeholder:!text-light-600 focus:!ring-2 focus:!ring-primary-200/50;
+      @apply !bg-dark-300 !rounded-xl !min-h-12 !px-4 !border-white/10 !text-light-100
+             placeholder:!text-light-600
+             focus:!ring-2 focus:!ring-primary-200/60 focus:!border-primary-200/40;
     }
 
     .btn {
-      @apply !w-full !bg-primary-200 !text-dark-100 hover:!bg-primary-100 !rounded-xl !min-h-11 !font-semibold !px-5 cursor-pointer transition-all duration-200;
+      @apply !w-full !bg-primary-200 !text-dark-100 hover:!bg-primary-100 !rounded-xl !min-h-12
+             !font-extrabold uppercase tracking-wide !px-5 cursor-pointer
+             transition-all duration-200 hover:shadow-[var(--shadow-glow)];
     }
   }
 
+  /* --- live call ------------------------------------------------------- */
   .call-view {
-    @apply flex sm:flex-row flex-col gap-8 items-center justify-between w-full;
+    @apply flex sm:flex-row flex-col gap-6 items-stretch justify-between w-full;
 
     h3 {
-      @apply text-center text-primary-100 mt-4 text-xl font-semibold;
+      @apply text-center text-light-100 mt-4 text-lg font-extrabold uppercase tracking-wider;
     }
 
     .card-interviewer {
-      @apply flex-center flex-col gap-3 p-8 h-[380px] blue-gradient-dark rounded-2xl border border-primary-200/30 flex-1 sm:basis-1/2 w-full shadow-[var(--shadow-soft)];
+      @apply flex-center flex-col gap-3 p-8 h-[340px] rounded-2xl flex-1 sm:basis-1/2 w-full
+             border border-primary-200/25 bg-dark-200 relative overflow-hidden
+             shadow-[var(--shadow-soft)];
     }
 
     .avatar {
-      @apply z-10 flex items-center justify-center blue-gradient rounded-2xl size-[120px] relative shadow-[var(--shadow-glow)];
+      @apply z-10 flex items-center justify-center rounded-2xl size-[120px] relative
+             bg-primary-200 shadow-[var(--shadow-glow)];
 
       .animate-speak {
-        @apply absolute inline-flex size-5/6 animate-ping rounded-2xl bg-primary-200/60;
+        @apply absolute inline-flex size-5/6 animate-ping rounded-2xl bg-primary-100/70;
       }
     }
 
     .card-border {
-      @apply rounded-2xl flex-1 sm:basis-1/2 w-full h-[380px] border border-white/10 bg-dark-200/80 p-0.5 overflow-hidden;
+      @apply rounded-2xl flex-1 sm:basis-1/2 w-full h-[340px] border border-white/10 bg-dark-200 p-0.5 overflow-hidden;
     }
 
     .card-content {
@@ -237,14 +323,15 @@
     @apply rounded-2xl w-full border border-white/10 overflow-hidden;
 
     .transcript {
-      @apply dark-gradient rounded-2xl min-h-14 px-6 py-4 flex items-center justify-center;
+      @apply dark-gradient rounded-2xl min-h-16 px-6 py-5 flex items-center justify-center;
 
       p {
-        @apply text-base text-center text-light-100 leading-relaxed;
+        @apply text-base md:text-lg text-center text-light-100 leading-relaxed font-medium;
       }
     }
   }
 
+  /* --- layout ---------------------------------------------------------- */
   .section-feedback {
     @apply flex flex-col gap-8 max-w-3xl mx-auto max-sm:px-4 text-base leading-7;
 
@@ -254,23 +341,55 @@
   }
 
   .auth-layout {
-    @apply flex items-center justify-center mx-auto max-w-7xl min-h-screen max-sm:px-4 max-sm:py-8 bg-dark-100/50;
+    @apply flex items-center justify-center mx-auto max-w-7xl min-h-screen max-sm:px-4 max-sm:py-8;
   }
 
   .root-layout {
     @apply flex mx-auto max-w-6xl flex-col gap-14 my-10 px-6 max-sm:px-4 max-sm:my-6;
   }
 
+  /* --- hero ------------------------------------------------------------ */
   .card-cta {
-    @apply flex flex-row blue-gradient-dark rounded-2xl px-10 py-8 items-center justify-between max-sm:flex-col max-sm:px-6 max-sm:gap-6 border border-white/10 shadow-[var(--shadow-soft)];
+    @apply relative flex flex-row rounded-3xl px-10 py-9 items-center justify-between overflow-hidden
+           border border-white/10 bg-dark-200
+           max-sm:flex-col max-sm:px-6 max-sm:gap-6 shadow-[var(--shadow-soft)];
   }
 
+  .card-cta::after {
+    content: "";
+    @apply absolute inset-0 pointer-events-none;
+    background:
+      radial-gradient(circle at 0% 0%, rgb(0 225 240 / 0.16), transparent 45%),
+      radial-gradient(circle at 100% 100%, rgb(255 45 120 / 0.16), transparent 45%);
+  }
+
+  /* --- interview cards -------------------------------------------------- */
   .interviews-section {
-    @apply flex flex-wrap gap-5 max-lg:flex-col w-full items-stretch;
+    @apply grid gap-5 w-full items-stretch
+           grid-cols-[repeat(auto-fill,minmax(310px,1fr))] max-sm:grid-cols-1;
+  }
+
+  .card-interview {
+    @apply relative flex flex-col justify-between gap-6 p-6 min-h-full rounded-2xl overflow-hidden
+           bg-dark-200 border border-white/5 shadow-[var(--shadow-soft)]
+           transition-colors duration-200;
+
+    .badge-text {
+      @apply text-[11px] font-extrabold uppercase tracking-wider;
+    }
   }
 
   .interview-text {
     @apply text-base text-center text-light-100;
+  }
+
+  /* --- meters ------------------------------------------------------------ */
+  .meter-track {
+    @apply h-2 w-full rounded-full bg-white/8 overflow-hidden;
+  }
+
+  .meter-fill {
+    @apply h-full rounded-full transition-[width] duration-700 ease-out;
   }
 
   .progress {
@@ -278,40 +397,62 @@
   }
 
   .tech-tooltip {
-    @apply absolute bottom-full mb-2 hidden group-hover:flex px-3 py-1.5 text-xs text-white bg-dark-300 border border-white/10 rounded-lg shadow-lg z-10;
-  }
-
-  .card-interview {
-    @apply dark-gradient rounded-2xl min-h-full flex flex-col p-6 relative overflow-hidden gap-8 justify-between border border-white/5 shadow-[var(--shadow-soft)];
-
-    .badge-text {
-      @apply text-sm font-semibold capitalize;
-    }
+    @apply absolute bottom-full mb-2 hidden group-hover:flex px-3 py-1.5 text-xs text-white
+           bg-dark-300 border border-white/10 rounded-lg shadow-lg z-10;
   }
 }
 
+/* ==========================================================================
+   Utilities
+   ========================================================================== */
+
 @utility dark-gradient {
-  @apply bg-gradient-to-b from-[#1a1b21] to-[#0f0f12];
+  @apply bg-gradient-to-b from-[#17131B] to-[#0D0A0F];
+}
+
+@utility heat-gradient {
+  background-image: linear-gradient(100deg, #00E1F0 0%, #7DF3FF 35%, #FF2D78 100%);
+}
+
+@utility heat-text {
+  background-image: linear-gradient(100deg, #00E1F0 0%, #7DF3FF 40%, #FF2D78 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 @utility border-gradient {
   @apply bg-gradient-to-b from-white/15 to-white/5;
 }
 
+@utility background-glass {
+  @apply bg-dark-200/70 backdrop-blur-xl;
+}
+
 @utility pattern {
   @apply bg-[url('/pattern.png')] bg-top bg-no-repeat;
 }
 
+/* kept for markup that still references them */
 @utility blue-gradient-dark {
-  @apply bg-gradient-to-b from-[#171532] to-[#08090D];
+  @apply bg-gradient-to-b from-[#17131B] to-[#0D0A0F];
 }
 
 @utility blue-gradient {
-  @apply bg-gradient-to-l from-[#FFFFFF] to-[#CAC5FE];
+  @apply bg-gradient-to-l from-[#7DF3FF] to-[#00E1F0];
 }
 
 @utility flex-center {
   @apply flex items-center justify-center;
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 @utility animate-fadeIn {
@@ -326,5 +467,82 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  70% { transform: scale(1.3); opacity: 0; }
+  100% { transform: scale(1.3); opacity: 0; }
+}
+
+/* --- interviewer halo -------------------------------------------------- */
+
+/* rings that leave the core outward while the agent is speaking */
+@keyframes halo-out {
+  0%   { transform: scale(0.62); opacity: 0.85; }
+  100% { transform: scale(1.25); opacity: 0; }
+}
+
+@keyframes spin-cw {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes spin-ccw {
+  from { transform: rotate(360deg); }
+  to   { transform: rotate(0deg); }
+}
+
+/* idle "alive" state — barely there, but the orb never looks frozen */
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 0.55; }
+  50%      { transform: scale(1.045); opacity: 0.9; }
+}
+
+@utility animate-halo-out {
+  animation: halo-out 1.9s ease-out infinite;
+}
+
+@utility animate-spin-slow {
+  animation: spin-cw 22s linear infinite;
+}
+
+@utility animate-spin-rev {
+  animation: spin-ccw 16s linear infinite;
+}
+
+@utility animate-breathe {
+  animation: breathe 3.4s ease-in-out infinite;
+}
+
+/* --- accordion (FAQ) ---------------------------------------------------- */
+
+@keyframes accordion-down {
+  from { height: 0; }
+  to   { height: var(--radix-accordion-content-height); }
+}
+
+@keyframes accordion-up {
+  from { height: var(--radix-accordion-content-height); }
+  to   { height: 0; }
+}
+
+@utility animate-accordion-down {
+  animation: accordion-down 0.22s ease-out;
+}
+
+@utility animate-accordion-up {
+  animation: accordion-up 0.22s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

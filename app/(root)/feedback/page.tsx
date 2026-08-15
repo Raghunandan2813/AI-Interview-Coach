@@ -19,8 +19,8 @@ const FeedbackPage = async () => {
     );
   }
 
-  const userFeedbacks = (await getFeedbacksByUserId(user.id)) || [];
-  const userInterviews = (await getInterviewsByUserId(user.id)) || [];
+  const userFeedbacks = (await getFeedbacksByUserId()) || [];
+  const userInterviews = (await getInterviewsByUserId()) || [];
   const interviewMap = new Map(userInterviews.map((interview) => [interview.id, interview]));
 
   const validPairs = userFeedbacks.map((feedback, index) => {

@@ -13,16 +13,18 @@ const RootLayout = async ({ children }: { children: ReactNode }) => {
   if (!user) redirect('/sign-in')
   return (
     <main className="flex flex-col h-screen overflow-hidden">
-      <nav className="flex items-center justify-between w-full px-6 py-4 border-b border-white/10 bg-dark-100 z-50 shrink-0 gap-2 sm:gap-4">
+      <nav className="flex items-center justify-between w-full px-6 py-3.5 border-b border-white/10 bg-dark-100/80 backdrop-blur-xl z-50 shrink-0 gap-2 sm:gap-4">
         <Link
-          href="/"
-          className="flex flex-row items-center gap-1 rounded-lg px-2 py-1.5 transition-colors hover:bg-white/5 shrink-0"
+          href="/home"
+          className="group flex flex-row items-center gap-1 rounded-xl px-2 py-1.5 transition-colors hover:bg-white/5 shrink-0"
         >
-          <Image src="/roboo.png" alt="logo" width={60} height={32} className="shrink-0 w-[40px] sm:w-[60px]" />
-          <span className="text-xl font-semibold text-white tracking-tight ml-2 max-sm:hidden">InterAi</span>
+          <Image src="/roboo.png" alt="logo" width={60} height={32} className="shrink-0 w-[36px] sm:w-[52px] transition-transform group-hover:scale-105" />
+          <span className="heat-text text-xl font-extrabold uppercase tracking-tight ml-2 max-sm:hidden">
+            Interview Coach
+          </span>
         </Link>
         <div className="flex-1 flex justify-center w-full max-w-2xl">
-          <SearchBar currentUserId={user.id} />
+          <SearchBar />
         </div>
         <div className="flex items-center gap-4 shrink-0">
           <UserDropdown user={user} />

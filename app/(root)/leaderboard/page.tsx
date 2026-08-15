@@ -8,7 +8,8 @@ export const metadata: Metadata = {
   description: "Check the top performers in the AI Interview challenges and see where you rank globally.",
 }
 
-export const dynamic = 'force-dynamic';
+// Caching lives on the aggregation in score.action.ts, not here — this page
+// sits under a layout that reads cookies, so it is always rendered on demand.
 
 export default async function LeaderboardPage() {
   const result = await getLeaderboard(50); // Get top 50 accumulated scorers
@@ -20,11 +21,16 @@ export default async function LeaderboardPage() {
       {/* Header section */}
       <div className="flex flex-col items-center text-center mb-12">
         <div className="relative mb-4">
-          <div className="absolute inset-0 bg-yellow-500/20 blur-2xl rounded-full"></div>
-          <Trophy size={64} className="text-yellow-400 relative z-10 drop-shadow-[0_0_15px_rgba(250,204,21,0.5)]" />
+          <div className="absolute inset-0 bg-primary-200/25 blur-2xl rounded-full"></div>
+          <Trophy size={56} className="text-primary-200 relative z-10 drop-shadow-[0_0_18px_rgba(0,225,240,0.6)]" />
         </div>
-        <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight mb-3">Global Leaderboard</h1>
-        <p className="text-light-400 max-w-lg text-sm md:text-base">Rank up by completing real AI Interviews. Score is the average of every interview feedback score you've generated.</p>
+        <p className="eyebrow mb-2">Standings</p>
+        <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-3">
+          <span className="heat-text">Leaderboard</span>
+        </h1>
+        <p className="text-light-400 max-w-lg text-sm md:text-base">
+          Ranked by your average score across every session. Run more, rank higher.
+        </p>
       </div>
 
       {/* Podium Top 3 */}
@@ -34,31 +40,31 @@ export default async function LeaderboardPage() {
           {/* Rank 2 */}
           <div className="flex flex-col items-center flex-1 max-w-[90px] sm:max-w-[120px] animate-in slide-in-from-bottom-8 duration-700 delay-100">
             <h3 className="font-bold text-light-100 truncate w-full text-center text-xs sm:text-sm md:text-base">{leaderboard[1].name}</h3>
-            <span className="text-primary-200 font-black mb-1 sm:mb-3 text-xs sm:text-base">{leaderboard[1].averageScore} pts</span>
-            <div className="w-full h-24 sm:h-32 bg-gradient-to-t from-dark-300 to-slate-400/20 rounded-t-xl border-t-4 border-slate-300 relative flex justify-center shadow-[0_0_20px_rgba(203,213,225,0.1)]">
-              <span className="text-2xl sm:text-4xl font-black text-slate-300 mt-2 opacity-80">2</span>
+            <span className="text-primary-200 stat-num mb-1 sm:mb-3 text-xs sm:text-base">{leaderboard[1].averageScore} pts</span>
+            <div className="w-full h-24 sm:h-32 bg-gradient-to-t from-dark-300 to-primary-300/25 rounded-t-xl border-t-4 border-primary-300 relative flex justify-center shadow-[0_0_20px_rgba(0,169,188,0.25)]">
+              <span className="text-2xl sm:text-4xl font-black text-primary-300 mt-2 opacity-80">2</span>
             </div>
           </div>
 
           {/* Rank 1 */}
           <div className="flex flex-col items-center flex-1 max-w-[110px] sm:max-w-[140px] z-10 animate-in slide-in-from-bottom-12 duration-700">
-            <div className="absolute -top-8 sm:-top-10 text-yellow-400 animate-bounce">
-              <Medal size={30} className="sm:hidden drop-shadow-[0_0_10px_rgba(250,204,21,0.8)]" />
-              <Medal size={40} className="hidden sm:block drop-shadow-[0_0_10px_rgba(250,204,21,0.8)]" />
+            <div className="absolute -top-8 sm:-top-10 text-primary-200 animate-bounce">
+              <Medal size={30} className="sm:hidden drop-shadow-[0_0_10px_rgba(0,225,240,0.8)]" />
+              <Medal size={40} className="hidden sm:block drop-shadow-[0_0_10px_rgba(0,225,240,0.8)]" />
             </div>
             <h3 className="font-bold text-white truncate w-full text-center text-sm md:text-lg">{leaderboard[0].name}</h3>
-            <span className="text-yellow-400 font-black mb-1 sm:mb-3 text-sm sm:text-lg">{leaderboard[0].averageScore} pts</span>
-            <div className="w-full h-36 sm:h-44 bg-gradient-to-t from-dark-300 to-yellow-500/30 rounded-t-xl border-t-4 border-yellow-400 relative flex justify-center shadow-[0_0_30px_rgba(250,204,21,0.2)]">
-              <span className="text-4xl sm:text-6xl font-black text-yellow-400 mt-2">1</span>
+            <span className="text-primary-200 stat-num mb-1 sm:mb-3 text-sm sm:text-lg">{leaderboard[0].averageScore} pts</span>
+            <div className="w-full h-36 sm:h-44 bg-gradient-to-t from-dark-300 to-primary-200/30 rounded-t-xl border-t-4 border-primary-200 relative flex justify-center shadow-[0_0_30px_rgba(0,225,240,0.25)]">
+              <span className="text-4xl sm:text-6xl font-black text-primary-200 mt-2">1</span>
             </div>
           </div>
 
           {/* Rank 3 */}
           <div className="flex flex-col items-center flex-1 max-w-[90px] sm:max-w-[120px] animate-in slide-in-from-bottom-6 duration-700 delay-200">
             <h3 className="font-bold text-light-100 truncate w-full text-center text-xs sm:text-sm md:text-base">{leaderboard[2].name}</h3>
-            <span className="text-amber-600 font-black mb-1 sm:mb-3 text-xs sm:text-base">{leaderboard[2].averageScore} pts</span>
-            <div className="w-full h-16 sm:h-24 bg-gradient-to-t from-dark-300 to-amber-700/20 rounded-t-xl border-t-4 border-amber-600 relative flex justify-center shadow-[0_0_20px_rgba(217,119,6,0.1)]">
-              <span className="text-xl sm:text-3xl font-black text-amber-600 mt-2 opacity-80">3</span>
+            <span className="text-heat-200 stat-num mb-1 sm:mb-3 text-xs sm:text-base">{leaderboard[2].averageScore} pts</span>
+            <div className="w-full h-16 sm:h-24 bg-gradient-to-t from-dark-300 to-heat-200/25 rounded-t-xl border-t-4 border-heat-200 relative flex justify-center shadow-[0_0_20px_rgba(255,45,120,0.2)]">
+              <span className="text-xl sm:text-3xl font-black text-heat-200 mt-2 opacity-80">3</span>
             </div>
           </div>
 
@@ -88,10 +94,10 @@ export default async function LeaderboardPage() {
               >
                 {/* Rank */}
                 <div className="col-span-2 flex justify-center">
-                  <div className={`w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-xs md:text-sm ${
-                    index === 0 ? 'bg-yellow-400 text-dark-100 shadow-[0_0_10px_rgba(250,204,21,0.5)]' :
-                    index === 1 ? 'bg-slate-300 text-dark-100' :
-                    index === 2 ? 'bg-amber-600 text-dark-100' :
+                  <div className={`w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center stat-num text-xs md:text-sm ${
+                    index === 0 ? 'bg-primary-200 text-dark-100 shadow-[0_0_10px_rgba(0,225,240,0.5)]' :
+                    index === 1 ? 'bg-primary-300 text-dark-100' :
+                    index === 2 ? 'bg-heat-200 text-white' :
                     'bg-white/5 text-light-400'
                   }`}>
                     {index + 1}
@@ -106,7 +112,7 @@ export default async function LeaderboardPage() {
 
                 {/* Score */}
                 <div className="col-span-2 md:col-span-2 flex justify-end items-center">
-                  <span className={`font-black tracking-tight ${index === 0 ? 'text-yellow-400 text-base md:text-lg' : 'text-primary-200 text-sm md:text-base'}`}>
+                  <span className={`stat-num tracking-tight ${index === 0 ? 'text-primary-200 text-base md:text-lg' : 'text-primary-200 text-sm md:text-base'}`}>
                     {user.averageScore}
                   </span>
                 </div>

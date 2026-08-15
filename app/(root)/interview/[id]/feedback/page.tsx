@@ -13,6 +13,7 @@ import { getCurrentUser } from "@/lib/action/auth.action";
 import DownloadFeedbackButton from "@/components/DownloadFeedbackButton";
 import ShareableResultCard from "@/components/ShareableResultCard";
 import ShareButtons from "@/components/ShareButtons";
+import { ScoreDial, ScoreMeter } from "@/components/ScoreMeter";
 
 
 
@@ -23,22 +24,24 @@ const Feedback = async ({ params }: RouteParams ) => {
   const user = await getCurrentUser();
 
   const interview = await getInterviewById(id);
-  if (!interview) redirect("/");
+  if (!interview) redirect("/home");
 
-  const feedback = await getFeedbackByInterviewId({
-    interviewId: id,
-    userId: user?.id!,
-  });
+  const feedback = await getFeedbackByInterviewId({ interviewId: id });
 
   const isoDate = feedback?.createdAt || "N/A";
 
   return (
   
     <section className="section-feedback">
-      <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold text-light-100 tracking-tight">
-          Feedback — <span className="capitalize text-primary-200">{interview.role}</span> Interview
+      <div className="text-center mb-8 flex flex-col items-center gap-2">
+        <p className="eyebrow">Session report</p>
+        <h1 className="text-3xl md:text-4xl font-extrabold text-light-100 tracking-tight capitalize">
+          {interview.role}
         </h1>
+      </div>
+
+      <div className="flex justify-center mb-8">
+        <ScoreDial score={feedback?.totalScore ?? 0} />
       </div>
 
       <div className="flex flex-col items-center gap-4 mb-8">
@@ -72,8 +75,13 @@ const Feedback = async ({ params }: RouteParams ) => {
               <path d="M9 5a.5.5 0 0 0-1 0v3H6a.5.5 0 0 0 0 1h2.5a.5.5 0 0 0 .5-.5z"/>
               <path d="M4 1.667v.383A2.5 2.5 0 0 0 2 4.5v7a2.5 2.5 0 0 0 2 2.45v.383C4 15.253 4.746 16 5.667 16h4.666C11.253 16 12 15.253 12 14.333v-.383a2.5 2.5 0 0 0 2-2.45v-7a2.5 2.5 0 0 0-2-2.45v-.383C12 .747 11.253 0 10.333 0H5.667C4.747 0 4 .746 4 1.667M4.5 3h7A1.5 1.5 0 0 1 13 4.5v7a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 3 11.5v-7A1.5 1.5 0 0 1 4.5 3"/>
             </svg>
-            Behavioral Analysis
+            Delivery &amp; Presence
           </h2>
+          <p className="text-xs text-light-500 -mt-2">
+            Estimated from your camera during the interview and visible only to you.
+            Lighting, glasses and camera angle all affect these numbers, so read them
+            as a rough guide rather than a verdict.
+          </p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
             <div className="flex flex-col gap-2">
@@ -98,13 +106,18 @@ const Feedback = async ({ params }: RouteParams ) => {
           </div>
 
           {feedback.behaviorAnalysis.cheatingFlags > 0 && (
-            <div className="mt-4 p-3 rounded-xl border border-red-500/30 bg-red-500/10 flex items-start gap-3">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" className="text-red-400 mt-1 shrink-0">
-                <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+            <div className="mt-4 p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 flex items-start gap-3">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" className="text-amber-400 mt-1 shrink-0">
+                <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
               </svg>
               <div className="flex flex-col">
-                <span className="text-sm font-semibold text-red-300">Moving or Cheating Flagged</span>
-                <span className="text-xs text-red-300/80 mt-1 leading-relaxed">The system flagged {feedback.behaviorAnalysis.cheatingFlags} instances indicating moving or cheating during the camera portion of the interview. You repeatedly looked away from the camera or your face could not be detected.</span>
+                <span className="text-sm font-semibold text-amber-200">Eye contact</span>
+                <span className="text-xs text-amber-200/80 mt-1 leading-relaxed">
+                  Your face wasn&apos;t visible to the camera in {feedback.behaviorAnalysis.cheatingFlags} samples.
+                  If you were reading notes, practise glancing at them less — holding the
+                  camera&apos;s eye reads as more confident. If you were well-lit and facing
+                  forward the whole time, ignore this; the detector misses faces often.
+                </span>
               </div>
             </div>
           )}
@@ -116,43 +129,57 @@ const Feedback = async ({ params }: RouteParams ) => {
       </div>
 
       <div className="flex flex-col gap-4 mb-8">
-        <h2 className="text-lg font-semibold text-light-100">Breakdown</h2>
+        <div className="flex flex-col gap-1">
+          <p className="eyebrow">Category breakdown</p>
+          <h2 className="text-xl font-extrabold tracking-tight text-light-100">Where the points went</h2>
+        </div>
         <div className="flex flex-col gap-3">
           {feedback?.categoryScores?.map((category: any, index: any) => (
-            <div
-              key={index}
-              className="p-4 rounded-xl border border-white/10 bg-dark-200/50"
-            >
-              <p className="font-semibold text-light-100">
-                {index + 1}. {category.name} — {category.score}/100
-              </p>
-              <p className="text-light-400 text-sm mt-1">{category.comment}</p>
+            <div key={index} className="panel">
+              <ScoreMeter score={category.score} label={category.name} />
+              <p className="text-light-400 text-sm mt-3 leading-relaxed">{category.comment}</p>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 mb-6">
-        <h3 className="text-base font-semibold text-primary-200">Strengths</h3>
-        <ul className="list-disc list-inside text-light-400 space-y-1">
-          {feedback?.strengths?.map((strength: any, index: any) => (
-            <li key={index}>{strength}</li>
-          ))}
-        </ul>
-      </div>
+      <div className="grid md:grid-cols-2 gap-4 mb-10">
+        <div className="panel">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="size-2 rounded-full bg-tier-strong" />
+            <h3 className="text-sm font-extrabold uppercase tracking-wider text-tier-strong">
+              What worked
+            </h3>
+          </div>
+          <ul className="list-none text-light-400 space-y-2 text-sm leading-relaxed">
+            {feedback?.strengths?.map((strength: any, index: any) => (
+              <li key={index} className="pl-4 relative before:absolute before:left-0 before:top-2 before:size-1.5 before:rounded-full before:bg-tier-strong/60">
+                {strength}
+              </li>
+            ))}
+          </ul>
+        </div>
 
-      <div className="flex flex-col gap-3 mb-10">
-        <h3 className="text-base font-semibold text-primary-200">Areas for improvement</h3>
-        <ul className="list-disc list-inside text-light-400 space-y-1">
-          {feedback?.areasForImprovement?.map((area: any, index: any) => (
-            <li key={index}>{area}</li>
-          ))}
-        </ul>
+        <div className="panel">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="size-2 rounded-full bg-tier-mid" />
+            <h3 className="text-sm font-extrabold uppercase tracking-wider text-tier-mid">
+              Work on this next
+            </h3>
+          </div>
+          <ul className="list-none text-light-400 space-y-2 text-sm leading-relaxed">
+            {feedback?.areasForImprovement?.map((area: any, index: any) => (
+              <li key={index} className="pl-4 relative before:absolute before:left-0 before:top-2 before:size-1.5 before:rounded-full before:bg-tier-mid/60">
+                {area}
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
 
       <div className="buttons">
         <Button className="btn-secondary flex-1" asChild>
-          <Link href="/" className="flex w-full justify-center items-center py-2.5">
+          <Link href="/home" className="flex w-full justify-center items-center py-2.5">
             Back to dashboard
           </Link>
         </Button>

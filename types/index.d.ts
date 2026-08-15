@@ -28,13 +28,18 @@ interface Interview {
   userId: string;
   type: string;
   finalized: boolean;
+  // Chosen once at creation and stored, so a card doesn't change logo on every
+  // render. Optional because interviews created before this was persisted
+  // won't have it.
+  coverImage?: string;
 }
 
+// The signed-in user is always resolved server-side from the session cookie.
+// Never add a userId or feedbackId here — accepting either from the caller
+// lets anyone write feedback under another account.
 interface CreateFeedbackParams {
   interviewId: string;
-  userId: string;
   transcript: { role: string; content: string }[];
-  feedbackId?: string;
   behaviorAnalysis?: {
     confidentScore: number;
     nervousScore: number;
@@ -55,6 +60,7 @@ interface InterviewCardProps {
   type: string;
   techstack: string[];
   createdAt?: string;
+  coverImage?: string;
 }
 
 interface AgentProps {
@@ -73,11 +79,9 @@ interface RouteParams {
 
 interface GetFeedbackByInterviewIdParams {
   interviewId: string;
-  userId: string;
 }
 
 interface GetLatestInterviewsParams {
-  userId: string;
   limit?: number;
 }
 

@@ -5,13 +5,20 @@ import { getCurrentUser } from "@/lib/action/auth.action";
 import { getRandomInterviewCover } from "@/lib/utils";
 import { groq, createGroq } from "@ai-sdk/groq";
 import { generateText } from "ai";
+import {
+  analyseTranscript,
+  evidenceCeiling,
+  weightedTotal,
+  RUBRIC,
+} from "@/lib/scoring";
 
-export async function getInterviewsByUserId(
-  userId: string,
-): Promise<Interview[] | null> {
+export async function getInterviewsByUserId(): Promise<Interview[] | null> {
+  const user = await getCurrentUser();
+  if (!user) return null;
+
   const interviews = await db
     .collection("interviews")
-    .where("userId", "==", userId)
+    .where("userId", "==", user.id)
     .orderBy("createdAt", "desc")
     .get();
 
@@ -22,14 +29,17 @@ export async function getInterviewsByUserId(
 }
 
 export async function getLatestInterviews(
-  params: GetLatestInterviewsParams,
+  params: GetLatestInterviewsParams = {},
 ): Promise<Interview[] | null> {
-  const { userId, limit = 20 } = params;
+  const user = await getCurrentUser();
+  if (!user) return null;
+
+  const { limit = 20 } = params;
   const interviews = await db
     .collection("interviews")
     .orderBy("createdAt", "desc")
     .where("finalized", "==", true)
-    .where("userId", "!=", userId)
+    .where("userId", "!=", user.id)
     .limit(limit)
     .get();
 
@@ -40,6 +50,11 @@ export async function getLatestInterviews(
 }
 
 export async function getInterviewById(id: string): Promise<Interview | null> {
+  // Interviews are shared — any signed-in user can take one — but anonymous
+  // callers must not be able to enumerate them.
+  const user = await getCurrentUser();
+  if (!user) return null;
+
   const doc = await db.collection("interviews").doc(id).get();
   if (!doc.exists) return null;
   return { id: doc.id, ...doc.data() } as Interview;
@@ -60,7 +75,6 @@ export async function createInterview(
 > {
   try {
     const user = await getCurrentUser();
-    console.log("Create interview user :", user);
     if (!user) {
       return {
         success: false,
@@ -130,8 +144,22 @@ export async function createInterview(
 }
 
 export async function createFeedback(params: CreateFeedbackParams) {
-  const { interviewId, userId, transcript, feedbackId, behaviorAnalysis } = params;
+  const { interviewId, transcript, behaviorAnalysis } = params;
   try {
+    const user = await getCurrentUser();
+    if (!user) return { success: false };
+
+    if (!interviewId || !Array.isArray(transcript) || transcript.length === 0) {
+      return { success: false };
+    }
+
+    // The interview must exist before we score it.
+    const interviewDoc = await db
+      .collection("interviews")
+      .doc(interviewId)
+      .get();
+    if (!interviewDoc.exists) return { success: false };
+
     const formattedTranscript = transcript
       .map(
         (sentence: { role: string; content: string }) =>
@@ -140,52 +168,56 @@ export async function createFeedback(params: CreateFeedbackParams) {
       .join("");
       
     const behaviorContext = behaviorAnalysis 
-      ? `\nBehavioral Analysis during interview:
-- Confidence metric: ${behaviorAnalysis.confidentScore}%
-- Nervousness metric: ${behaviorAnalysis.nervousScore}%
-- Focus lost / suspicious activity flags: ${behaviorAnalysis.cheatingFlags}
-Please directly address the user's emotional state, confidence, and focus in your final assessment and areas for improvement.`
+      ? `\nDelivery signals estimated from the candidate's camera (noisy — treat as weak evidence, never as proof of misconduct):
+- Appeared composed in ${behaviorAnalysis.confidentScore}% of samples
+- Appeared tense in ${behaviorAnalysis.nervousScore}% of samples
+- Face not detected in ${behaviorAnalysis.cheatingFlags} samples (commonly caused by lighting or camera angle, not by cheating)
+Use these only to add gentle, practical delivery coaching to your feedback. Do NOT accuse the candidate of cheating or dishonesty under any circumstances, and do not let these numbers change the technical scoring.`
       : "";
+
+    // Facts measured from the transcript, not guessed by the model. Handing
+    // these over stops it inventing its own impression of how much was said.
+    const stats = analyseTranscript(transcript);
+    const { ceiling, reason: ceilingReason } = evidenceCeiling(stats);
 
     const groqProvider = createGroq({ apiKey: process.env.GROQ_API_KEY! });
 
     const { text } = await generateText({
       model: groqProvider("llama-3.3-70b-versatile"),
-      system: `You are a strict senior interviewer. Be consistent and evidence-based. Your task is to evaluate the candidate using a hard rubric.
-Rules:
-- Do NOT be lenient.
-- Penalize vague, generic, or incomplete answers.
-- Penalize filler-heavy communication and poor structure.
-- Give high scores only when there is clear technical depth and specific examples.
-- Keep category scores aligned with comments and finalAssessment.
-- Respond with only valid JSON, no markdown or extra text.`,
-      prompt: `Analyze this mock interview transcript and score the candidate with strict standards.
+      // Deterministic. The same transcript must produce the same grade, or the
+      // progress chart is measuring noise instead of improvement.
+      temperature: 0,
+      system: `You are a strict, consistent interview grader. You judge only what is present in the transcript and you cite evidence for every score.
+You never invent detail the candidate did not say. You never soften a score to be encouraging — the coaching goes in the written feedback, not in the number.
+Respond with valid JSON only. No markdown, no code fence, no commentary.`,
+      prompt: `Grade this mock interview transcript.
+
+${RUBRIC}
+
+Measured facts about this transcript (already computed — treat as ground truth):
+- Candidate answers given: ${stats.answerCount}
+- Answers substantial enough to assess (8+ words): ${stats.substantiveAnswers}
+- Total words spoken by candidate: ${stats.totalWords}
+- Average words per answer: ${stats.avgWordsPerAnswer}
+- Filler words used: ${stats.fillerCount} (${stats.fillerPer100Words} per 100 words)
 ${behaviorContext}
 
 Transcript:
 ${formattedTranscript}
 
-Score the candidate from 0 to 100 in exactly these 5 categories (use these exact names): "Communication Skills", "Technical Knowledge", "Problem Solving", "Cultural Fit", "Confidence and Clarity".
+Score these exact five categories: "Communication Skills", "Technical Knowledge", "Problem Solving", "Cultural Fit", "Confidence and Clarity".
 
-Scoring rubric:
-- 0-39: weak / mostly incorrect / unclear.
-- 40-59: basic understanding, many gaps.
-- 60-74: acceptable but lacks depth or examples.
-- 75-89: strong, mostly correct, good reasoning.
-- 90-100: exceptional depth, precise, concise, and evidence-backed.
+Write "strengths" and "areasForImprovement" as specific, actionable items that reference what the candidate actually said. Avoid generic advice that would fit any candidate.
+"finalAssessment" should be 2-4 sentences addressed to the candidate directly.
 
-Use strict scoring: average candidates should usually be in 55-75 range.
-Avoid random variance: scores must be justified by transcript evidence.
-
-Return a single JSON object with this exact structure (no other fields, no markdown code fence):
+Return exactly this JSON shape:
 {
-  "totalScore": <number 0-100>,
   "categoryScores": [
-    { "name": "Communication Skills", "score": <number>, "comment": "<string>" },
-    { "name": "Technical Knowledge", "score": <number>, "comment": "<string>" },
-    { "name": "Problem Solving", "score": <number>, "comment": "<string>" },
-    { "name": "Cultural Fit", "score": <number>, "comment": "<string>" },
-    { "name": "Confidence and Clarity", "score": <number>, "comment": "<string>" }
+    { "name": "Communication Skills", "score": <0-100>, "comment": "<evidence-backed, 1-2 sentences>" },
+    { "name": "Technical Knowledge", "score": <0-100>, "comment": "<evidence-backed, 1-2 sentences>" },
+    { "name": "Problem Solving", "score": <0-100>, "comment": "<evidence-backed, 1-2 sentences>" },
+    { "name": "Cultural Fit", "score": <0-100>, "comment": "<evidence-backed, 1-2 sentences>" },
+    { "name": "Confidence and Clarity", "score": <0-100>, "comment": "<evidence-backed, 1-2 sentences>" }
   ],
   "strengths": ["<string>", ...],
   "areasForImprovement": ["<string>", ...],
@@ -208,24 +240,49 @@ Return a single JSON object with this exact structure (no other fields, no markd
     }
     const object = result.data;
 
+    // The model grades the categories; the total is arithmetic. That way the
+    // headline number can never contradict the breakdown underneath it.
+    const rawTotal = weightedTotal(object.categoryScores);
+    const totalScore = Math.min(rawTotal, ceiling);
+
+    const areasForImprovement = [...object.areasForImprovement];
+    if (ceilingReason && rawTotal > ceiling) {
+      // Be explicit when the cap bit, rather than leaving a confusing number.
+      areasForImprovement.unshift(ceilingReason);
+    }
+
     const feedback = {
       interviewId,
-      userId,
-      totalScore: object.totalScore,
+      userId: user.id,
+      totalScore,
       categoryScore: object.categoryScores,
       strengths: object.strengths,
-      areasForImporvement: object.areasForImprovement,
+      areasForImporvement: areasForImprovement,
       finalAssesment: object.finalAssessment,
       behaviorAnalysis: behaviorAnalysis || null,
+      // Kept so a score can be explained — and re-derived if the rubric changes.
+      scoring: {
+        rawTotal,
+        ceiling,
+        stats,
+        rubricVersion: 2,
+      },
       createdAt: new Date().toISOString(),
     };
-    let feedbackRef;
 
-    if (feedbackId) {
-      feedbackRef = db.collection("feedback").doc(feedbackId);
-    } else {
-      feedbackRef = db.collection("feedback").doc();
-    }
+    // Reuse this user's existing feedback for the interview if there is one.
+    // The document id is never taken from the caller, so one user can never
+    // overwrite another user's report.
+    const existing = await db
+      .collection("feedback")
+      .where("interviewId", "==", interviewId)
+      .where("userId", "==", user.id)
+      .limit(1)
+      .get();
+
+    const feedbackRef = existing.empty
+      ? db.collection("feedback").doc()
+      : existing.docs[0].ref;
 
     await feedbackRef.set(feedback);
     return {
@@ -241,12 +298,15 @@ Return a single JSON object with this exact structure (no other fields, no markd
 export async function getFeedbackByInterviewId(
   params: GetFeedbackByInterviewIdParams,
 ): Promise<Feedback | null> {
-  const { interviewId, userId } = params;
+  const user = await getCurrentUser();
+  if (!user) return null;
+
+  const { interviewId } = params;
 
   const querySnapshot = await db
     .collection("feedback")
     .where("interviewId", "==", interviewId)
-    .where("userId", "==", userId)
+    .where("userId", "==", user.id)
     .limit(1)
     .get();
 
@@ -264,10 +324,13 @@ export async function getFeedbackByInterviewId(
   } as Feedback;
 }
 
-export async function getFeedbacksByUserId(userId: string): Promise<Feedback[] | null> {
+export async function getFeedbacksByUserId(): Promise<Feedback[] | null> {
+  const user = await getCurrentUser();
+  if (!user) return null;
+
   const querySnapshot = await db
     .collection("feedback")
-    .where("userId", "==", userId)
+    .where("userId", "==", user.id)
     .get();
 
   if (querySnapshot.empty) return null;
