@@ -4,24 +4,27 @@ import { Search } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getLatestInterviews } from '@/lib/action/general.action'
 
-export default function SearchBar({ currentUserId }: { currentUserId?: string }) {
+export default function SearchBar() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const initialQuery = searchParams.get('query') || ''
-  
+
   const [query, setQuery] = useState(initialQuery)
   const [interviews, setInterviews] = useState<any[]>([])
   const [isFocused, setIsFocused] = useState(false)
+  const hasLoadedSuggestions = useRef(false)
   const wrapperRef = useRef<HTMLDivElement>(null)
-  
-  // Fetch interviews for fast client-side filtering
-  useEffect(() => {
-    if (currentUserId) {
-      getLatestInterviews({ userId: currentUserId, limit: 100 }).then((data) => {
-        if (data) setInterviews(data)
-      })
-    }
-  }, [currentUserId])
+
+  // Suggestions are only useful once someone engages with the box, so load them
+  // on first focus rather than spending 100 document reads on every page view.
+  const loadSuggestions = () => {
+    if (hasLoadedSuggestions.current) return
+    hasLoadedSuggestions.current = true
+
+    getLatestInterviews({ limit: 100 }).then((data) => {
+      if (data) setInterviews(data)
+    })
+  }
 
   // Sync external query changes
   useEffect(() => {
@@ -34,9 +37,9 @@ export default function SearchBar({ currentUserId }: { currentUserId?: string })
       // Avoid pushing if they clicked a suggestion and are no longer focused
       if (isFocused && query !== (searchParams.get('query') || '')) {
          if (query.trim()) {
-           router.replace(`/?query=${encodeURIComponent(query.trim())}`)
+           router.replace(`/home?query=${encodeURIComponent(query.trim())}`)
          } else if (searchParams.has('query')) {
-           router.replace('/')
+           router.replace('/home')
          }
       }
     }, 400)
@@ -70,7 +73,10 @@ export default function SearchBar({ currentUserId }: { currentUserId?: string })
           type="text" 
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          onFocus={() => setIsFocused(true)}
+          onFocus={() => {
+            setIsFocused(true)
+            loadSuggestions()
+          }}
           placeholder="Search generated interviews by role or tech stack..." 
           className="w-full bg-dark-200/80 border border-white/10 rounded-xl h-10 pl-10 pr-4 text-sm text-light-100 focus:outline-none focus:border-primary-200/50 hover:bg-dark-200 transition-all placeholder:text-light-600 shadow-sm"
         />

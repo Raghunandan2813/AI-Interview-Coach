@@ -8,11 +8,19 @@ const monaSans = Mona_Sans({
   subsets: ["latin"],
 });
 
+// Every number in Arena — scores, timers, ranks, streaks — is set in mono with
+// tabular figures so digits hold their column instead of jittering as they
+// count up.
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://interviewprep.app"),
   title: {
-    default: "InterAI - AI Mock Interview Practice",
-    template: "%s | InterAI",
+    default: "Interview Coach - AI Mock Interview Practice",
+    template: "%s | Interview Coach",
   },
   description:
     "Practice AI-powered mock interviews, get detailed feedback, and track progress with performance analytics.",
@@ -24,15 +32,15 @@ export const metadata: Metadata = {
     "interview feedback",
   ],
   openGraph: {
-    title: "InterAI - AI Mock Interview Practice",
+    title: "Interview Coach - AI Mock Interview Practice",
     description:
       "Practice AI-powered mock interviews, get detailed feedback, and improve faster.",
     type: "website",
-    siteName: "InterAI",
+    siteName: "Interview Coach",
   },
   twitter: {
     card: "summary_large_image",
-    title: "InterAI - AI Mock Interview Practice",
+    title: "Interview Coach - AI Mock Interview Practice",
     description:
       "Practice AI-powered mock interviews, get detailed feedback, and improve faster.",
   },
@@ -53,9 +61,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${monaSans.className} antialiased  pattern`}>
+      <body
+        className={`${monaSans.variable} ${geistMono.variable} ${monaSans.className} antialiased`}
+      >
         {children}
-        <Toaster />
+        <Toaster theme="dark" richColors position="top-center" />
       </body>
     </html>
   );

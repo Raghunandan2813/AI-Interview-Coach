@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { generateQuizQuestions, QuizQuestion } from '@/lib/action/quiz.action';
+import { generateQuizQuestions, saveQuizResult, QuizQuestion } from '@/lib/action/quiz.action';
 import { Dices, Brain, Trophy, ChevronRight, Hash, Frown, CheckCircle2, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -18,6 +18,9 @@ export default function QuizGame() {
   const [score, setScore] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [isRevealed, setIsRevealed] = useState(false);
+  // The topic the current run was generated with — `topic` is the input box and
+  // can be edited after the quiz starts.
+  const [activeTopic, setActiveTopic] = useState('Surprise');
 
   const startGame = async (isSurprise: boolean) => {
     setGameState('loading');
@@ -25,6 +28,7 @@ export default function QuizGame() {
     const result = await generateQuizQuestions(targetTopic);
 
     if (result.success) {
+      setActiveTopic(targetTopic.trim() || 'Surprise');
       setQuestions(result.questions);
       setCurrentQIndex(0);
       setScore(0);
@@ -55,6 +59,13 @@ export default function QuizGame() {
       setIsRevealed(false);
     } else {
       setGameState('results');
+      // Persist the run so a quiz leaves a practice history behind instead of
+      // vanishing when the component unmounts.
+      void saveQuizResult({
+        topic: activeTopic,
+        score,
+        total: questions.length,
+      });
     }
   };
 
@@ -135,7 +146,7 @@ export default function QuizGame() {
           >
             <div className="flex justify-between items-center mb-6">
               <span className="text-light-400 font-medium">Question {currentQIndex + 1} of 5</span>
-              <span className="bg-primary-200/20 text-primary-200 px-3 py-1 rounded-full text-sm font-bold shadow-[0_0_10px_rgba(167,139,250,0.2)]">Level: {currentQIndex === 0 ? "Easy" : currentQIndex === 4 ? "Extreme" : ["Easy", "Medium", "Hard", "Hard", "Extreme"][currentQIndex]}</span>
+              <span className="bg-primary-200/20 text-primary-200 px-3 py-1 rounded-full text-sm font-bold shadow-[0_0_10px_rgba(0,225,240,0.2)]">Level: {currentQIndex === 0 ? "Easy" : currentQIndex === 4 ? "Extreme" : ["Easy", "Medium", "Hard", "Hard", "Extreme"][currentQIndex]}</span>
             </div>
 
             <div className="bg-dark-200/80 backdrop-blur-md rounded-3xl border border-white/10 p-6 md:p-10 mb-6 shadow-[var(--shadow-soft)]">
@@ -232,7 +243,7 @@ export default function QuizGame() {
             )}
 
             <h2 className="text-4xl font-bold text-white mb-2 z-10">Quiz Complete</h2>
-            <div className="text-6xl font-black text-primary-200 my-6 tracking-tighter drop-shadow-[0_0_15px_rgba(167,139,250,0.5)] z-10">
+            <div className="text-6xl font-black text-primary-200 my-6 tracking-tighter drop-shadow-[0_0_15px_rgba(0,225,240,0.5)] z-10">
               {score}<span className="text-3xl text-light-600">/5</span>
             </div>
 

@@ -151,7 +151,7 @@ export default function CreateInterviewForm() {
                    className={cn(
                      "px-4 py-2 rounded-xl text-sm font-semibold transition-all border outline-none",
                      selectedTechs.includes(tech) 
-                       ? "bg-primary-200 border-primary-200 text-dark-100 shadow-[0_0_10px_rgba(167,139,250,0.5)] scale-[1.02]" 
+                       ? "bg-primary-200 border-primary-200 text-dark-100 shadow-[0_0_10px_rgba(0,225,240,0.5)] scale-[1.02]" 
                        : "bg-dark-300/40 border-white/10 text-light-400 hover:text-light-100 hover:border-white/20 hover:bg-dark-300"
                    )}
                  >

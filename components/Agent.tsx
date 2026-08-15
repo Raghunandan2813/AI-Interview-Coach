@@ -5,12 +5,13 @@ import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { interviewer } from '@/constants';
+import { interviewer, IDLE_TIMEOUT_SECONDS } from '@/constants';
 import {vapi} from '@/lib/vapi.sdk'
 import { createFeedback } from '@/lib/action/general.action';
-import { getAuth } from 'firebase-admin/auth';
-import { getCurrentUser } from '@/lib/action/auth.action';
-import { NextResponse } from 'next/server';
+import { checkInterviewBudget, recordInterviewUsage } from '@/lib/action/usage.action';
+import { toast } from 'sonner';
+import InterviewerOrb, { type OrbState } from './InterviewerOrb';
+import InterviewStage from './InterviewStage';
 import Webcam from "react-webcam";
 import * as faceapi from "@vladmandic/face-api";
 
@@ -118,7 +119,18 @@ const Agent = ({userName , userId, type, interviewId, questions} : AgentProps) =
   const [liveFeedback, setLiveFeedback] = useState<LiveAnswerFeedback[]>([]);
   const hasSubmitted = React.useRef(false);
   const [camError, setCamError] = useState(false);
-  
+
+  // Reading expressions from someone's face is biometric processing, so it
+  // never begins without an explicit opt-in. Declining runs the interview
+  // audio-only and no face data is produced at all.
+  const [cameraConsent, setCameraConsent] =
+    useState<'pending' | 'granted' | 'declined'>('pending');
+  const callStartedAt = React.useRef<number | null>(null);
+  // Last moment either party said anything, used to detect an abandoned call.
+  const lastActivityAt = React.useRef<number>(Date.now());
+  const [isStarting, setIsStarting] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
   const webcamRef = React.useRef<Webcam>(null);
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const analysisStats = React.useRef({
@@ -129,7 +141,7 @@ const Agent = ({userName , userId, type, interviewId, questions} : AgentProps) =
   });
 
   useEffect(() => {
-    if (type !== 'interview') return;
+    if (type !== 'interview' || cameraConsent !== 'granted') return;
 
     const loadModels = async () => {
       try {
@@ -143,14 +155,27 @@ const Agent = ({userName , userId, type, interviewId, questions} : AgentProps) =
       }
     };
     loadModels();
-  }, [type]);
+  }, [type, cameraConsent]);
 
   useEffect(()=>{
-    const onCallStart = () =>setCallStatus(CallStatus.ACTIVE);
-    const onCallEnd = () => setCallStatus(CallStatus.FINISHED);
-    //router.push('/')
+    const onCallStart = () => {
+      callStartedAt.current = Date.now();
+      lastActivityAt.current = Date.now();
+      setCallStatus(CallStatus.ACTIVE);
+    };
+    const onCallEnd = () => {
+      setCallStatus(CallStatus.FINISHED);
+      // Meter what the call actually consumed. The server clamps this to the
+      // assistant's hard ceiling, so a forged value can't corrupt the total.
+      if (callStartedAt.current !== null) {
+        const seconds = (Date.now() - callStartedAt.current) / 1000;
+        callStartedAt.current = null;
+        void recordInterviewUsage(seconds);
+      }
+    };
     const onMessage = (message : Message) => {
       if(message.type === 'transcript' && message.transcriptType === 'final'){
+        lastActivityAt.current = Date.now();
         const newMessage = {role: mapRole(message.role), content: message.transcript}
         setMessages((prev) => {
           const nextMessages = [...prev, newMessage];
@@ -170,10 +195,30 @@ const Agent = ({userName , userId, type, interviewId, questions} : AgentProps) =
         })
       }
     }
-    const onSpeechStart = () => setIsSpeaking(true);
-    const onSpeechEnd = () => setIsSpeaking(false);
+    const onSpeechStart = () => {
+      lastActivityAt.current = Date.now();
+      setIsSpeaking(true);
+    };
+    const onSpeechEnd = () => {
+      lastActivityAt.current = Date.now();
+      setIsSpeaking(false);
+    };
 
-    const onError = (error: Error) => console.log('Error', error);
+    // Vapi surfaces microphone and connection failures here. Swallowing them
+    // into console.log makes a dead mic look like a working call.
+    const onError = (error: any) => {
+      console.error('Vapi error', error);
+      const message =
+        error?.errorMsg ||
+        error?.error?.message ||
+        error?.message ||
+        (typeof error === 'string' ? error : null);
+      toast.error(
+        message
+          ? `Call error: ${message}`
+          : 'Call error. Check that your browser has microphone access.',
+      );
+    };
     vapi.on('call-start', onCallStart);
     vapi.on('call-end', onCallEnd);
     vapi.on('message', onMessage);
@@ -189,14 +234,36 @@ const Agent = ({userName , userId, type, interviewId, questions} : AgentProps) =
     vapi.off('speech-end', onSpeechEnd);
     vapi.off('error', onError);
     }
-  }, [])
+  }, [type])
 
+
+  // End a call nobody is on. Vapi has no silence timeout we can set for a
+  // transient assistant, so the browser watches for dead air instead. The call
+  // is stopped the same way pressing "End call" does, so whatever was said
+  // still gets scored rather than thrown away.
+  useEffect(() => {
+    if (callStatus !== CallStatus.ACTIVE) return;
+
+    let stopped = false;
+    const idleCheckId = setInterval(() => {
+      if (stopped) return;
+      if (Date.now() - lastActivityAt.current < IDLE_TIMEOUT_SECONDS * 1000) return;
+
+      stopped = true;
+      clearInterval(idleCheckId);
+      toast.info(`Ended the call after ${IDLE_TIMEOUT_SECONDS} seconds of silence.`);
+      setCallStatus(CallStatus.FINISHED);
+      vapi.stop();
+    }, 5000);
+
+    return () => clearInterval(idleCheckId);
+  }, [callStatus]);
 
   useEffect(() => {
-    if (type !== 'interview') return;
+    if (type !== 'interview' || cameraConsent !== 'granted') return;
 
     let intervalId: any;
-    
+
     if (callStatus === CallStatus.ACTIVE && modelsLoaded) {
       intervalId = setInterval(async () => {
         if (webcamRef.current && webcamRef.current.video) {
@@ -231,7 +298,7 @@ const Agent = ({userName , userId, type, interviewId, questions} : AgentProps) =
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [callStatus, modelsLoaded, type]);
+  }, [callStatus, modelsLoaded, type, cameraConsent]);
 
 
  const handleGenerateFeedback = async (messages: SavedMessage[]) =>{
@@ -250,7 +317,6 @@ const Agent = ({userName , userId, type, interviewId, questions} : AgentProps) =
 
   const {success, feedbackId : id} = await createFeedback({
     interviewId: interviewId!,
-    userId: userId!,
     transcript: messages,
     behaviorAnalysis
   } as any)
@@ -258,14 +324,14 @@ const Agent = ({userName , userId, type, interviewId, questions} : AgentProps) =
     router.push(`/interview/${interviewId}/feedback`)
   }else{
     console.log('Error saving feedback');
-    router.push('/');
+    router.push('/home');
   }
  }
   useEffect(()=>{
      if(callStatus === CallStatus.FINISHED && !hasSubmitted.current){
       if(type === 'generate'){
         hasSubmitted.current = true;
-        router.push('/')
+        router.push('/home')
       }else{
         hasSubmitted.current = true;
         handleGenerateFeedback(messages);
@@ -274,43 +340,118 @@ const Agent = ({userName , userId, type, interviewId, questions} : AgentProps) =
    
   },[messages, callStatus, type , userId])
   
-  const handleCall = async () => {
-    setCallStatus(CallStatus.CONNECTING);
-    if(type==='generate'){
-      await vapi.start(process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID!, {
-        variableValues : {
-          userid: userId
-        }
-      })
-  }else{
-     let formattedQuestions ='';
-     if(questions){
-      formattedQuestions = questions.map((question) => `-${question}`).join('/n');
-     }
-     await vapi.start(interviewer, {
-      variableValues:{
-        questions: formattedQuestions
-      }
-     })
-     console.log(userId)
-      
-    
-    
-
-   }
-  
-
-
+  const enterFullscreen = () => {
+    // Must be called synchronously from the click — browsers reject a
+    // fullscreen request that arrives after an await, since the user gesture
+    // has expired by then.
+    const el = document.documentElement;
+    if (!document.fullscreenElement && el.requestFullscreen) {
+      el.requestFullscreen().catch(() => {
+        /* denied or unsupported — the stage still renders, just not fullscreen */
+      });
     }
-    
+  };
+
+  const exitFullscreen = () => {
+    if (document.fullscreenElement && document.exitFullscreen) {
+      document.exitFullscreen().catch(() => {});
+    }
+  };
+
+  const handleCall = async () => {
+    if (isStarting) return;
+    setIsStarting(true);
+
+    // Claim fullscreen while we still hold the gesture, then verify budget.
+    if (type === 'interview') enterFullscreen();
+
+    try {
+      // Gate on the user's remaining minutes before opening a billable call.
+      const budget = await checkInterviewBudget();
+      if (!budget.allowed) {
+        toast.error(budget.reason ?? 'No practice minutes left this month.');
+        exitFullscreen();
+        return;
+      }
+
+      setCallStatus(CallStatus.CONNECTING);
+
+      if (type === 'generate') {
+        await vapi.start(process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID!, {
+          variableValues: {
+            userid: userId,
+          },
+        });
+      } else {
+        const formattedQuestions = questions
+          ? questions.map((question) => `- ${question}`).join('\n')
+          : '';
+
+        await vapi.start(interviewer, {
+          variableValues: {
+            questions: formattedQuestions,
+          },
+        });
+      }
+    } catch (e) {
+      console.error('Failed to start call', e);
+      toast.error('Could not start the interview. Please try again.');
+      setCallStatus(CallStatus.INACTIVE);
+      exitFullscreen();
+    } finally {
+      setIsStarting(false);
+    }
+  };
+
+
 const handleDisconnect = async ()=>{
   setCallStatus(CallStatus.FINISHED);
 
   vapi.stop();
 }
 
+  // Wall-clock timer for the stage header.
+  useEffect(() => {
+    if (callStatus !== CallStatus.ACTIVE) {
+      setElapsedSeconds(0);
+      return;
+    }
+
+    const tick = () =>
+      setElapsedSeconds(
+        callStartedAt.current
+          ? Math.floor((Date.now() - callStartedAt.current) / 1000)
+          : 0,
+      );
+
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [callStatus]);
+
+  // Hand the screen back the moment the interview is over — including when the
+  // idle guard or Vapi's own duration cap ends it, not just the End button.
+  useEffect(() => {
+    if (callStatus === CallStatus.FINISHED || callStatus === CallStatus.INACTIVE) {
+      exitFullscreen();
+    }
+  }, [callStatus]);
+
   const latestMessage = messages[messages.length-1]?.content;
   const isCallInactiveOrFinished = callStatus=== CallStatus.INACTIVE || callStatus === CallStatus.FINISHED;
+  // Make the camera decision before the interview can begin, so consent is a
+  // deliberate choice rather than something skipped past.
+  const awaitingCameraChoice = type === 'interview' && cameraConsent === 'pending';
+
+  const orbState: OrbState =
+    callStatus === CallStatus.CONNECTING
+      ? 'connecting'
+      : callStatus === CallStatus.ACTIVE
+        ? (isSpeaking ? 'speaking' : 'listening')
+        : 'idle';
+
+  const elapsedLabel = `${String(Math.floor(elapsedSeconds / 60)).padStart(2, '0')}:${String(elapsedSeconds % 60).padStart(2, '0')}`;
+
   const averageLiveScore =
     liveFeedback.length > 0
       ? Math.round(
@@ -333,26 +474,80 @@ const handleDisconnect = async ()=>{
       ? "Dropping"
       : "Stable";
 
+  // A live interview takes over the whole screen; everything else keeps the
+  // normal in-page layout.
+  const inStage =
+    type === 'interview' &&
+    (callStatus === CallStatus.CONNECTING || callStatus === CallStatus.ACTIVE);
+
+  if (inStage) {
+    return (
+      <InterviewStage
+        userName={userName}
+        orbState={orbState}
+        webcamRef={webcamRef}
+        cameraOn={cameraConsent === 'granted'}
+        camError={camError}
+        modelsLoaded={modelsLoaded}
+        onCamError={() => setCamError(true)}
+        latestMessage={latestMessage}
+        liveFeedback={liveFeedback}
+        averageLiveScore={averageLiveScore}
+        trendLabel={trendLabel}
+        recentTrendDelta={recentTrendDelta}
+        elapsedLabel={elapsedLabel}
+        onDisconnect={handleDisconnect}
+      />
+    );
+  }
+
   return (
     <>
+      {/* live status bar — the call should feel like it's on the air */}
+      {callStatus === CallStatus.ACTIVE && (
+        <div className="flex items-center justify-center gap-3 mb-5">
+          <span className="relative flex size-2.5">
+            <span className="absolute inline-flex h-full w-full rounded-full bg-heat-200 opacity-75 animate-ping" />
+            <span className="relative inline-flex size-2.5 rounded-full bg-heat-200" />
+          </span>
+          <span className="eyebrow !text-heat-100">On the record</span>
+        </div>
+      )}
+
       <div className="call-view">
         <div className="card-interviewer">
-          <div className="avatar">
-            <Image
-              src="/roboo.png"
-              alt="AI"
-              width={64}
-              height={54}
-              className="object-cover rounded-xl"
-            />
-            {isSpeaking && <span className="animate-speak" />} 
-          </div> 
-          <h3>AI Interview</h3>
+          <InterviewerOrb state={orbState} size={210} />
+          <h3>Interviewer</h3>
+          <p
+            className={cn(
+              "eyebrow transition-colors",
+              orbState === "speaking"
+                ? "!text-heat-100"
+                : orbState === "listening"
+                  ? "!text-primary-200"
+                  : "",
+            )}
+          >
+            {orbState === "speaking"
+              ? "Speaking"
+              : orbState === "listening"
+                ? "Listening"
+                : orbState === "connecting"
+                  ? "Connecting"
+                  : "Ready"}
+          </p>
         </div>
         <div className="card-border">
           <div className="card-content">
             {type === 'interview' ? (
-              camError ? (
+              cameraConsent !== 'granted' ? (
+                <div className="rounded-2xl size-[120px] ring-2 ring-white/10 bg-dark-100 flex flex-col items-center justify-center p-2 text-center">
+                  <span className="text-[10px] font-semibold text-light-400">
+                    {cameraConsent === 'declined' ? 'Camera off' : 'Camera not enabled'}
+                  </span>
+                  <span className="text-[8px] mt-1 text-light-600 leading-tight">Audio-only mode</span>
+                </div>
+              ) : camError ? (
                 <div className="rounded-2xl size-[120px] ring-2 ring-red-500/50 bg-red-500/10 flex flex-col items-center justify-center p-2 text-center text-red-500">
                   <span className="text-[10px] font-semibold">Camera Blocked</span>
                   <span className="text-[8px] mt-1 opacity-70 leading-tight">Audio-only mode active</span>
@@ -384,6 +579,40 @@ const handleDisconnect = async ()=>{
           </div>
         </div>
       </div>
+
+      {type === 'interview' && cameraConsent === 'pending' && isCallInactiveOrFinished && (
+        <div className="mt-6 rounded-2xl border border-primary-200/30 bg-primary-200/5 p-4 md:p-5">
+          <h4 className="text-sm md:text-base font-semibold text-light-100 mb-2">
+            Turn on camera coaching?
+          </h4>
+          <p className="text-xs md:text-sm text-light-400 leading-relaxed mb-1">
+            If you turn this on, your camera analyses your expressions and eye contact
+            while you answer, so your report can cover how you came across as well as
+            what you said.
+          </p>
+          <p className="text-xs md:text-sm text-light-400 leading-relaxed mb-4">
+            Everything is processed in your browser. No video or images are uploaded or
+            stored — only two summary numbers are saved with your report, and only you
+            can see them. The interview works exactly the same without it.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => setCameraConsent('granted')}
+              className="px-4 py-2 rounded-lg bg-primary-200 text-dark-100 text-sm font-semibold hover:bg-white transition-colors"
+            >
+              Turn on camera
+            </button>
+            <button
+              type="button"
+              onClick={() => setCameraConsent('declined')}
+              className="px-4 py-2 rounded-lg border border-white/10 text-light-100 text-sm font-semibold hover:bg-white/5 transition-colors"
+            >
+              Continue without it
+            </button>
+          </div>
+        </div>
+      )}
 
       {messages.length > 0 && (
         <div className="transcript-border mt-6">
@@ -422,26 +651,26 @@ const handleDisconnect = async ()=>{
               <div className="flex items-center justify-between gap-2">
                 <p
                   className={cn(
-                    "text-sm font-semibold",
+                    "text-sm font-extrabold uppercase tracking-wider",
                     averageLiveScore === null
-                      ? "text-light-400"
+                      ? "text-light-600"
                       : averageLiveScore >= 75
-                      ? "text-emerald-300"
+                      ? "text-tier-strong"
                       : averageLiveScore >= 55
-                      ? "text-amber-300"
-                      : "text-rose-300",
+                      ? "text-tier-mid"
+                      : "text-tier-weak",
                   )}
                 >
                   {averageLiveScore === null
-                    ? "Waiting for answers"
+                    ? "Waiting"
                     : averageLiveScore >= 75
-                    ? "Green - Strong"
+                    ? "Strong"
                     : averageLiveScore >= 55
-                    ? "Yellow - Improve"
-                    : "Red - Weak"}
+                    ? "Improving"
+                    : "Needs work"}
                 </p>
-                <p className="text-xs text-light-300">
-                  {averageLiveScore === null ? "-" : `${averageLiveScore}/100`}
+                <p className="stat-num text-sm text-light-100">
+                  {averageLiveScore === null ? "—" : `${averageLiveScore}`}
                 </p>
               </div>
             </div>
@@ -504,7 +733,16 @@ const handleDisconnect = async ()=>{
 
       <div className="w-full flex justify-center mt-8">
         {callStatus !== "ACTIVE" ? (
-          <button className="relative btn-call" onClick={handleCall}>
+          <button
+            className="relative btn-call disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={handleCall}
+            disabled={awaitingCameraChoice || isStarting}
+            title={
+              awaitingCameraChoice
+                ? "Choose whether to turn on camera coaching first"
+                : undefined
+            }
+          >
             <span
               className={cn(
                 "absolute inset-0 animate-ping rounded-xl opacity-50",

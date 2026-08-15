@@ -15,7 +15,7 @@ interface ShareableResultCardProps {
 const ShareableResultCard = ({
   score,
   role,
-  appName = "InterAi",
+  appName = "Interview Coach",
   date,
 }: ShareableResultCardProps) => {
   const cardRef = useRef<HTMLDivElement>(null);

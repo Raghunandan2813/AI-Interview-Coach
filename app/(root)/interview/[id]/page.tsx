@@ -10,7 +10,7 @@ const Page = async ({ params }: RouteParams) => {
   const { id } = await params;
   const user = await getCurrentUser();
   const interview = await getInterviewById(id);
-  if (!interview) redirect("/");
+  if (!interview) redirect("/home");
 
   return (
     <div className="flex flex-col gap-6">
@@ -18,7 +18,7 @@ const Page = async ({ params }: RouteParams) => {
         <div className="flex flex-row gap-4 items-center flex-wrap">
           <div className="flex flex-row gap-3 items-center">
             <Image
-              src={getRandomInterviewCover()}
+              src={interview.coverImage || getRandomInterviewCover()}
               alt="cover"
               width={44}
               height={44}
